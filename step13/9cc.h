@@ -27,6 +27,7 @@ struct Token {
 
 typedef enum {
 	ND_RETURN,
+	ND_BLOCK,
 	ND_IF,
 	ND_ELSE,
 	ND_WHILE,
@@ -52,6 +53,7 @@ struct Node {
 	NodeKind kind;
 	Node *lhs;
 	Node *rhs;
+	Node *next;	// for BLOCK : node list
 	int val;
 	int offset;	// for IF/ELSE/WHILE : label number
 };
