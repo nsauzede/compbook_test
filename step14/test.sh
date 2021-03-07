@@ -9,6 +9,8 @@ assert() {
         exit 1
     fi
 }
+# assert 6 'foo2(i=42);0;'
+# assert 6 'foo();0;'
 assert 6 'j=0;for(i=0;i<=10;i=i+1){j=j+1;i=i+1;}j;'
 assert 22 'j=0;for(i=0;i<=10;i=i+1)j=j+2;j;'
 assert 22 'j=0;i=0;while(i<11) j=2*(i+1)+(i=i+1)-i;j;'
