@@ -12,7 +12,7 @@ void gen_lval(Node *node) {
 	}
 	printf("\tmov rax, rbp\n");
 	printf("\tsub rax, %d\n", node->offset);
-	printf("\tpush rax\n");
+	printf("\tpush rax\n		// End of gen_lval node=%p\n", node);
 }
 
 void gen(Node *node) {
@@ -43,7 +43,7 @@ void gen(Node *node) {
 			// Following RSP 16-byte adjustment is important to respect x64 ABI
 			printf("\tand rsp, 0xfffffffffffffff0\n");
 			printf("\tcall %s\n", buf);
-			printf("\tpush rax\n");
+			printf("\tpush rax\n			// End of call\n");
 			return;
 		}
 		case ND_BLOCK:
@@ -57,19 +57,29 @@ void gen(Node *node) {
 			return;
 		}
 		case ND_FOR:
+			printf("// FOR%d n=%p l=%p r=%p", node->offset, node->next, node->lhs, node->rhs);
+			if (node->lhs)
+				printf(" ll=%p lr=%p", node->lhs->lhs, node->lhs->rhs);
+			if (node->rhs)
+				printf(" rl=%p rr=%p", node->rhs->lhs, node->rhs->rhs);
+			printf("\n");
 			gen(node->lhs);
-			printf("\t.Lbegin%d:\n", node->offset);
-			gen(node->rhs->lhs);
-			printf("\tpop rax\n");
-			printf("\tcmp rax, 0\n");
-			printf("\tje .Lend%d\n", node->offset);
+			printf("\t.Lforbegin%d:\n", node->offset);
+			if (node->rhs->lhs) {
+				gen(node->rhs->lhs);
+				printf("\tpop rax\n");
+				printf("\tcmp rax, 0\n");
+				printf("\tje .Lforend%d\n", node->offset);
+			}
+			printf("// gen rhs\n");
 			gen(node->rhs->rhs->rhs);
+			printf("// gen lhs\n");
 			gen(node->rhs->rhs->lhs);
-			printf("\tjmp .Lbegin%d\n", node->offset);
-			printf("\t.Lend%d:\n", node->offset);
+			printf("\tjmp .Lforbegin%d\n", node->offset);
+			printf("\t.Lforend%d:\n", node->offset);
 			return;
 		case ND_WHILE:
-			printf("\t.Lbegin%d:\n", node->offset);
+			printf("\t.Lwhilebegin%d:\n", node->offset);
 			break;
 		case ND_NUM:
 			printf("\tpush %d\n", node->val);
@@ -78,7 +88,7 @@ void gen(Node *node) {
 			gen_lval(node);
 			printf("\tpop rax\n");
 			printf("\tmov rax, [rax]\n");
-			printf("\tpush rax\n");
+			printf("\tpush rax\n		// End of lvar\n");
 			return;
 		case ND_ASSIGN:
 			gen_lval(node->lhs);
@@ -102,22 +112,25 @@ void gen(Node *node) {
 		if (node->rhs->kind == ND_ELSE) {
 			printf("\tje .Lelse%d\n", node->offset);
 		} else {
-			printf("\tje .Lend%d\n", node->offset);
+			printf("\tje .Lifend%d\n", node->offset);
 		}
 	} else if (node->kind == ND_ELSE) {
-		printf("\tjmp .Lend%d\n", node->offset);
+		printf("\tjmp .Lifend%d\n", node->offset);
 		printf("\t.Lelse%d:\n", node->offset);
 	} else if (node->kind == ND_WHILE) {
 		printf("\tpop rax\n");
 		printf("\tcmp rax, 0\n");
-		printf("\tje .Lend%d\n", node->offset);
+		printf("\tje .Lwhileend%d\n", node->offset);
 	}
 	gen(node->rhs);
 	if (node->kind == ND_WHILE) {
-		printf("\tjmp .Lbegin%d\n", node->offset);
+		printf("\tjmp .Lwhilebegin%d\n", node->offset);
 	}
-	if (node->kind == ND_IF || node->kind == ND_WHILE) {
-		printf("\t.Lend%d:\n", node->offset);
+	if (node->kind == ND_IF) {
+		printf("\t.Lifend%d:\n", node->offset);
+	}
+	if (node->kind == ND_WHILE) {
+		printf("\t.Lwhileend%d:\n", node->offset);
 	}
 	if (node->kind == ND_IF || node->kind == ND_ELSE || node->kind == ND_WHILE) {
 		return;
@@ -171,10 +184,10 @@ void gen(Node *node) {
 		default:
 			error("%s: Unknown node type %d\n", __func__, node->kind);
 	}
-	printf("\tpush rax\n");
+	printf("\tpush rax\n			// End of gen\n");
 }
 
-Node *code[100];
+Node *code;
 void generate() {
 	printf(".intel_syntax noprefix\n");
 	printf(".globl main\n");
@@ -183,9 +196,11 @@ void generate() {
 	printf("\tpush rbp\n");
 	printf("\tmov rbp, rsp\n");
 	printf("\tsub rsp, 208\n");
-	for (int i = 0; code[i]; i++) {
-		gen(code[i]);
+	Node *next = code;
+	while (next) {
+		gen(next);
 		printf("\tpop rax\n");
+		next = next->next;
 	}
 	printf("\tmov rsp,rbp\n");
 	printf("\tpop rbp\n");

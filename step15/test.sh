@@ -9,9 +9,12 @@ assert() {
         exit 1
     fi
 }
-# assert 6 'foo2(i=42);0;'
+# assert 42 'main(){j=0;i=i+1;j=j+2;}'
+# assert 10 'foo(){j=0;for(;j!=2;){j=j+1;}return 2;}'
+assert 42 'main(){return 42;}'
+# assert 6 'main(){foo2(i=42);return 0;}'
 # assert 6 'foo();0;'
-assert 6 'j=0;for(i=0;i<=10;i=i+1){j=j+1;i=i+1;}j;'
+PRINT_NODES=1 assert 6 'foo(){i=0;j=0;for(;i<=10;i=i+1){j=j+1;i=i+1;}return j;}'
 assert 22 'j=0;for(i=0;i<=10;i=i+1)j=j+2;j;'
 assert 22 'j=0;i=0;while(i<11) j=2*(i+1)+(i=i+1)-i;j;'
 assert 66 'if (1) 66; else 77;';assert 77 'if (0) 66; else 77;'
@@ -29,4 +32,3 @@ assert 2 'fee=2;fee;';assert 2 'fee=2;foo=3;fee;'
 assert 6 'foo = 1;bar = 2 + 3; foo + bar; // 6を返す'
 assert 18 'Foo1 = 2;Foo2 = 20; Foo2 - Foo1;'
 assert 9 'foo = 2;bar = 2 * 3;return 1+(baz = foo + bar);'
-echo OK

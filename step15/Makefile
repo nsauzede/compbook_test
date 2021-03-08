@@ -15,7 +15,7 @@ test: $(TARGET)
 	./test.sh
 
 check: $(TARGET)
-	./$(TARGET) '123;' > tmp.s
+	./$(TARGET) 'main(){return 123;}' > tmp.s
 	$(CC) -o tmp tmp.s
 	./tmp ; echo $$?
 
