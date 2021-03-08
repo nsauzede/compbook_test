@@ -52,7 +52,8 @@ typedef struct Node Node;
 
 struct Node {
 	NodeKind kind;
-	Node *lhs;	// for FUNC : lvar of the func ident
+	Node *lhs;	// for CALL : lvar of the func ident
+				// for LVAR : LVar*
 	Node *rhs;	// for CALL ARGS : arg list via subsequent ->next
 				// for FUNC : list of args via lvar->next
 	Node *next;	// for BLOCK : compound stmt list via subsequent ->next
@@ -72,17 +73,18 @@ struct LVar {
 
 extern char *user_input;
 extern Token *token;
-extern Node *code[100];
+extern Node *code;
 
 void error_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);
 bool consume(char *op);
 Token *consume_ident();
+Token *expect_ident();
 bool consume_keyword(char *op);
 void expect(char *op);
 int expect_number();
 bool at_eof();
-Token *new_token(TokenKind kind, Token *cur, char *str);
+Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *tokenize(char *input);
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);

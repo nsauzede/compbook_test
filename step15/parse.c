@@ -7,6 +7,7 @@
 #include "9cc.h"
 
 LVar g_empty_local;
+int g_locals_offset;
 LVar *locals = &g_empty_local;
 
 void print_node(Node *node, int depth) {
@@ -26,7 +27,7 @@ void print_node(Node *node, int depth) {
 		case ND_BLOCK:
 		{
 			Node *next = node->next;
-			fprintf(stderr, "BLOCK\n");
+			fprintf(stderr, "BLOCK n=%p\n", node->next);
 			while (next) {
 				print_node(next, depth + 1);
 				// fprintf(stderr, ";");
@@ -41,7 +42,11 @@ void print_node(Node *node, int depth) {
 		case ND_WHILE:fprintf(stderr, "WHILE\n");break;
 		case ND_FOR:fprintf(stderr, "FOR\n");break;
 		case ND_EQU:fprintf(stderr, "EQU\n");break;
-		case ND_LVAR:fprintf(stderr, "LVAR\n");break;
+		case ND_LVAR: {
+			LVar *lvar = (LVar *)node->lhs;
+			fprintf(stderr, "LVAR offset=%d name=%s\n", node->offset, lvar->name);
+			break;
+		}
 		case ND_NUM:fprintf(stderr, "NUM %d\n", node->val);break;
 		case ND_ASSIGN:fprintf(stderr, "ASSIGN\n");break;
 		case ND_ADD:fprintf(stderr, "ADD\n");break;
@@ -51,17 +56,12 @@ void print_node(Node *node, int depth) {
 	print_node(node->rhs, depth);
 }
 
-void print_nodes(Node **nodes) {
-	if (!nodes) {
-		return;
-	}
-	while (1) {
-		if (!*nodes) {
-			break;
-		}
+void print_nodes(Node *nodes) {
+	Node *next = nodes;
+	while (next) {
 		fprintf(stderr, "Statement :\n");
-		print_node(*nodes, 0);
-		nodes++;
+		print_node(next, 0);
+		next = next->next;
 	}
 }
 
@@ -118,19 +118,6 @@ Node *primary() {
 			lvar->name = tok->str;
 			lvar->len = tok->len;
 			return node;
-
-		node = new_node(ND_BLOCK, 0, 0);
-		Node **next = &node->next;
-		while (1) {
-			Node *stmt_ = stmt();
-			if (!stmt_) {
-				break;
-			}
-			// fprintf(stderr, "ADDED STMT TO LIST\n");
-			*next = stmt_;
-			next = &stmt_->next;
-		}
-		return node;
 		}
 		Node *node = calloc(1, sizeof(Node));
 		node->kind = ND_LVAR;
@@ -142,12 +129,23 @@ Node *primary() {
 			lvar->next = locals;
 			lvar->name = tok->str;
 			lvar->len = tok->len;
+			// fprintf(stderr, "USING LOCALS OFFSET=%d\n", locals->offset);
 			lvar->offset = locals->offset + 8;
 			node->offset = lvar->offset;
 			locals = lvar;
 		}
+		node->lhs = (Node *)lvar;
 		return node;
 	}
+	// if (consume("}")) {
+	// 	return 0;
+	// }
+	// if (consume(";")) {
+	// 	return 0;
+	// }
+	// if (token->kind == TK_RESERVED) {
+	// 	return 0;
+	// }
 	return new_node_num(expect_number());
 }
 
@@ -236,8 +234,8 @@ Node *stmt() {
 	bool is_if = false;
 	bool is_while = false;
 	Node *node;
-	if (consume("}")) {
-		return 0;
+	if (token->kind == TK_RESERVED) {
+	 	return 0;
 	}
 	if (consume("{")) {
 		node = new_node(ND_BLOCK, 0, 0);
@@ -262,6 +260,7 @@ Node *stmt() {
 		is_while = true;
 	}
 	else if (consume_keyword("for")) {
+		// fprintf(stderr, "ENTERING FOR...\n");
 		expect("(");
 		Node *expr1 = 0, *expr2 = 0, *expr3 = 0;
 		if (!consume(";")) {
@@ -307,7 +306,7 @@ Node *stmt() {
 		label++;
 		return node;
 	} else if (is_return) {
-		// fprintf(stderr, "OUTPUT RETURN !!\n");
+		fprintf(stderr, "OUTPUT RETURN !!\n");
 		node = new_node(ND_RETURN, node, NULL);
 	}
 	expect(";");
@@ -315,11 +314,19 @@ Node *stmt() {
 }
 
 void body() {
+	fprintf(stderr, "Entering body..\n");
+	expect("{");
 	int i = 0;
+	Node **next = &code;
 	while (!at_eof()) {
-		code[i++] = stmt();
+		*next = stmt();
+		if (!*next) {
+			break;
+		}
+		next = &(*next)->next;
 	}
-	code[i] = NULL;
+	fprintf(stderr, "Done body..\n");
+	// expect("}");	// already consumed by primary ?
 	int do_print_nodes = 0;
 	char *env = getenv("PRINT_NODES");
 	if (env) {
@@ -331,6 +338,9 @@ void body() {
 }
 
 void func() {
+	Token *tok = expect_ident();
+	expect("(");
+	expect(")");
 	body();
 }
 

@@ -102,8 +102,15 @@ bool consume(char *op) {
 	return true;
 }
 
+// If the next token is the expected symbol, read the token one more time.
+// Otherwise, report an error.
+void expect(char *op) {
+	if (!consume(op)) {
+		error_at(token->str, "expected '%c'", *op);
+	}
+}
+
 bool consume_keyword(char *op) {
-	// if (strncmp(token->str, op, token->len)) {
 	if (strlen(op) != token->len || memcmp(token->str, op, token->len)) {
 		return false;
 	}
@@ -120,13 +127,12 @@ Token *consume_ident() {
 	return tok;
 }
 
-// If the next token is the expected symbol, read the token one more time.
-// Otherwise, report an error.
-void expect(char *op) {
-	if (token->kind != TK_RESERVED || strncmp(token->str, op, token->len)) {
-		error_at(token->str, "expected '%c'", *op);
+Token *expect_ident() {
+	Token *tok = consume_ident();
+	if (!tok) {
+		error_at(token->str, "It's not an identifier");
 	}
-	token = token->next;
+	return tok;
 }
 
 // If the next token is a number, read the token one more time and return the number.
@@ -144,13 +150,23 @@ bool at_eof() {
 	return token->kind == TK_EOF;
 }
 
+int block_level = 0;
 // Create a new token and connect it to cur
-Token *new_token(TokenKind kind, Token *cur, char *str) {
+Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
 	Token *tok = calloc(1, sizeof(Token));
 	tok->kind = kind;
 	tok->str = str;
+	tok->len = len;
 	cur->next = tok;
 	// print_token(tok);
+	if (kind == TK_RESERVED && !strncmp(str, "{", len)) {
+		block_level++;
+	} else if (kind == TK_RESERVED && !strncmp(str, "}", len)) {
+		if (block_level <= 0) {
+			error_at(str, "Bad block level");
+		}
+		block_level--;
+	}
 	return tok;
 }
 
@@ -160,6 +176,7 @@ bool is_keyword(char *p, char *keyword) {
 	int len = strlen(keyword);
 	return !strncmp(p, keyword, len) && !is_alnum(p[len]);
 }
+
 // tokenize the input string p and return it
 Token *tokenize(char *input) {
 	user_input = input;
@@ -192,46 +209,40 @@ Token *tokenize(char *input) {
 				len = 2;
 			}
 			if (len) {
-				cur = new_token(TK_RESERVED, cur, p);
+				cur = new_token(TK_RESERVED, cur, p, len);
 				p += len;
-				cur->len = len;
 				continue;
 			}
 		}
 		// One char reserved keywords
 		if (strchr("+-*/()<>;={},", *p)) {
-			cur = new_token(TK_RESERVED, cur, p++);
-			cur->len = 1;
+			cur = new_token(TK_RESERVED, cur, p, 1);
+			p += cur->len;
 			continue;
 		} else if (isdigit(*p)) {
-			cur = new_token(TK_NUM, cur, p);
 			char *old_p = p;
-			cur->val = strtol(p, &p, 10);
-			cur->len = p - old_p;
+			int val = strtol(p, &p, 10);
+			cur = new_token(TK_NUM, cur, old_p, p - old_p);
+			cur->val = val;
 			continue;
 		} else if (is_keyword(p, "return")) {
-			cur = new_token(TK_RETURN, cur, p);
-			cur->len = 6;
+			cur = new_token(TK_RETURN, cur, p, 6);
 			p += cur->len;
 			continue;
 		} else if (is_keyword(p, "if")) {
-			cur = new_token(TK_IF, cur, p);
-			cur->len = 2;
+			cur = new_token(TK_IF, cur, p, 2);
 			p += cur->len;
 			continue;
 		} else if (is_keyword(p, "else")) {
-			cur = new_token(TK_ELSE, cur, p);
-			cur->len = 4;
+			cur = new_token(TK_ELSE, cur, p, 4);
 			p += cur->len;
 			continue;
 		} else if (is_keyword(p, "while")) {
-			cur = new_token(TK_WHILE, cur, p);
-			cur->len = 5;
+			cur = new_token(TK_WHILE, cur, p, 5);
 			p += cur->len;
 			continue;
 		} else if (is_keyword(p, "for")) {
-			cur = new_token(TK_FOR, cur, p);
-			cur->len = 3;
+			cur = new_token(TK_FOR, cur, p, 3);
 			p += cur->len;
 			continue;
 		} else if (is_alnum(*p)) {
@@ -239,13 +250,16 @@ Token *tokenize(char *input) {
 			while (is_alnum(*p)) {
 				p++;
 			}
-			cur = new_token(TK_IDENT, cur, old_p);
-			cur->len = p - old_p;
+			cur = new_token(TK_IDENT, cur, old_p, p - old_p);
 			continue;
 		}
 		error_at(p, "I can't tokenize '%c'", *p);
 	}
-	new_token(TK_EOF, cur, p);
+	if (block_level != 0) {
+		// error_at(p, "Bad global block level");
+		error_at(p, "Expected declaration or statement at end of input\n\tMaybe a trailing '}' is missing ?)");
+	}
+	new_token(TK_EOF, cur, p, 0);
 	token = head.next;
 	int do_print_tokens = 0;
 	char *env = getenv("PRINT_TOKENS");
