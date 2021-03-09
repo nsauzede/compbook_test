@@ -31,6 +31,21 @@ void error(char *fmt, ...) {
 	exit(1);
 }
 
+// Input program
+char *user_input;
+// Report the error location.
+void error_at(char *loc, char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	int pos = loc - user_input;
+	fprintf(stderr, "%s\n", user_input);
+	fprintf(stderr, "%*s", pos, " "); // print pos spaces
+	fprintf(stderr, "^ ");
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	exit(1);
+}
+
 // When the next token is the expected symbol, read the token one more time and
 // Return true. Otherwise, return false.
 bool consume(char op) {
@@ -45,7 +60,7 @@ bool consume(char op) {
 // Otherwise, report an error.
 void expect(char op) {
 	if (token->kind != TK_RESERVED || token->str[0] != op) {
-		error("It's not '%c'", op);
+		error_at(token->str, "It's not '%c'", op);
 	}
 	token = token->next;
 }
@@ -54,7 +69,7 @@ void expect(char op) {
 // Otherwise, report an error.
 int expect_number() {
 	if (token->kind != TK_NUM) {
-		error("It's not a number");
+		error_at(token->str, "It's not a number");
 	}
 	int val = token->val;
 	token = token->next;
@@ -93,7 +108,7 @@ Token *tokenize(char *p) {
 			cur->val = strtol(p, &p, 10);
 			continue;
 		}
-		error("I can't tokenize '%c'", *p);
+		error_at(p, "I can't tokenize '%c'", *p);
 	}
 	new_token(TK_EOF, cur, p);
 	return head.next;
@@ -104,7 +119,8 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Usage: %s <number>\n", argv[0]);
 		return 1;
 	}
-	token = tokenize(argv[1]);
+	user_input = argv[1];
+	token = tokenize(user_input);
 	printf("exit(%d", expect_number());
 	while (!at_eof()) {
 		if (consume('+')) {
