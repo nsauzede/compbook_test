@@ -3,12 +3,23 @@
 
 int main(int argc, char *argv[]) {
 	if (argc < 2) {
-		fprintf(stderr, "Usage: %s <number>\n", argv[0]);
+		fprintf(stderr, "Usage: %s 'expr'\n", argv[0]);
 		return 1;
 	}
-	int number = 0;
-	int arg = 1;
-	sscanf(argv[arg++], "%d", &number);
-	printf("exit(%d)\n", number);
+	char *p = argv[1];
+	printf("exit(%ld", strtol(p, &p, 10));
+	while (*p) {
+		if (*p == '+') {
+			p++;
+			printf("+%ld", strtol(p, &p, 10));
+		} else if (*p == '-') {
+			p++;
+			printf("-%ld", strtol(p, &p, 10));
+		} else {
+			fprintf(stderr, "Unexpected character '%c'\n", *p);
+			return 1;
+		}
+	}
+	printf(")\n");
 	return 0;
 }
