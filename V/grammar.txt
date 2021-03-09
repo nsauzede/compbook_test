@@ -1,1 +1,1 @@
-expr    = num (("+" num) | ("-" num))*
+expr    = num ("+" num | "-" num)*

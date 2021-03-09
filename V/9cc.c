@@ -1,24 +1,117 @@
+#include <ctype.h>
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+typedef enum {
+	TK_RESERVED,
+	TK_NUM,
+	TK_EOF,
+} TokenKind;
+
+typedef struct Token Token;
+struct Token {
+	TokenKind kind;
+	Token *next;
+	int val;
+	char *str;
+};
+
+Token *token;
+
+// Function to report an error
+// takes the same arguments as printf
+void error(char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	exit(1);
+}
+
+// When the next token is the expected symbol, read the token one more time and
+// Return true. Otherwise, return false.
+bool consume(char op) {
+	if (token->kind != TK_RESERVED || token->str[0] != op) {
+		return false;
+	}
+	token = token->next;
+	return true;
+}
+
+// If the next token is the expected symbol, read the token one more time.
+// Otherwise, report an error.
+void expect(char op) {
+	if (token->kind != TK_RESERVED || token->str[0] != op) {
+		error("It's not '%c'", op);
+	}
+	token = token->next;
+}
+
+// If the next token is a number, read the token one more time and return the number.
+// Otherwise, report an error.
+int expect_number() {
+	if (token->kind != TK_NUM) {
+		error("It's not a number");
+	}
+	int val = token->val;
+	token = token->next;
+	return val;
+}
+
+bool at_eof() {
+	return token->kind == TK_EOF;
+}
+
+// Create a new token and connect it to cur
+Token *new_token(TokenKind kind, Token *cur, char *str) {
+	Token *tok = calloc(1, sizeof(Token));
+	tok->kind = kind;
+	tok->str = str;
+	cur->next = tok;
+	return tok;
+}
+
+// tokenize the input string p and return it
+Token *tokenize(char *p) {
+	Token head;
+	head.next = NULL;
+	Token *cur = &head;
+	while (*p) {
+		if (isspace(*p)) {
+			p++;
+			continue;
+		}
+		if (*p == '+' || *p == '-') {
+			cur = new_token(TK_RESERVED, cur, p++);
+			continue;
+		}
+		if (isdigit(*p)) {
+			cur = new_token(TK_NUM, cur, p);
+			cur->val = strtol(p, &p, 10);
+			continue;
+		}
+		error("I can't tokenize '%c'", *p);
+	}
+	new_token(TK_EOF, cur, p);
+	return head.next;
+}
 
 int main(int argc, char *argv[]) {
-	if (argc < 2) {
-		fprintf(stderr, "Usage: %s 'expr'\n", argv[0]);
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <number>\n", argv[0]);
 		return 1;
 	}
-	char *p = argv[1];
-	printf("exit(%ld", strtol(p, &p, 10));
-	while (*p) {
-		if (*p == '+') {
-			p++;
-			printf("+%ld", strtol(p, &p, 10));
-		} else if (*p == '-') {
-			p++;
-			printf("-%ld", strtol(p, &p, 10));
-		} else {
-			fprintf(stderr, "Unexpected character '%c'\n", *p);
-			return 1;
+	token = tokenize(argv[1]);
+	printf("exit(%d", expect_number());
+	while (!at_eof()) {
+		if (consume('+')) {
+			printf("+%d", expect_number());
 		}
+		expect('-');
+		printf("-%d", expect_number());
 	}
 	printf(")\n");
 	return 0;
