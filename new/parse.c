@@ -37,7 +37,6 @@ void print_node(Node *node, int depth) {
 		}
 		case ND_RETURN:fprintf(stderr, "RETURN\n");break;
 		case ND_IF:fprintf(stderr, "IF\n");break;
-		case ND_ELSE:fprintf(stderr, "ELSE\n");break;
 		case ND_WHILE:fprintf(stderr, "WHILE\n");break;
 		case ND_FOR:fprintf(stderr, "FOR\n");break;
 		case ND_EQU:fprintf(stderr, "EQU\n");break;
@@ -136,17 +135,15 @@ Node *primary() {
 		Node *node = calloc(1, sizeof(Node));
 		node->kind = ND_LVAR;
 		LVar *lvar = find_lvar(tok);
-		if (lvar) {
-			node->offset = lvar->offset;
-		} else {
+		if (!lvar) {
 			lvar = calloc(1, sizeof(LVar));
 			lvar->next = locals;
 			lvar->name = tok->str;
 			lvar->len = tok->len;
 			lvar->offset = locals->offset + 1;
-			node->offset = lvar->offset;
 			locals = lvar;
 		}
+		node->lvar = lvar;
 		return node;
 	}
 	return new_node_num(expect_number());
@@ -232,11 +229,8 @@ Node *expr() {
 }
 
 Node *stmt() {
-	static int label = 0;
-	bool is_return = false;
-	bool is_if = false;
-	bool is_while = false;
 	Node *node;
+	bool is_return = false;
 	if (consume("}")) {
 		return 0;
 	}
@@ -255,63 +249,51 @@ Node *stmt() {
 		return node;
 	}
 	if (consume_keyword("if")) {
+		node = new_node(ND_IF, 0, 0);
 		expect("(");
-		is_if = true;
+		node->cond = expr();
+		expect(")");
+		node->then = stmt();
+		if (consume_keyword("else")) {
+			node->else_ = stmt();
+		}
+		return node;
 	}
 	else if (consume_keyword("while")) {
+		node = new_node(ND_WHILE, 0, 0);
 		expect("(");
-		is_while = true;
+		node->cond = expr();
+		expect(")");
+		node->then = stmt();
+		return node;
 	}
 	else if (consume_keyword("for")) {
+		node = new_node(ND_FOR, 0, 0);
 		expect("(");
-		Node *expr1 = 0, *expr2 = 0, *expr3 = 0;
 		if (!consume(";")) {
-			expr1 = expr();
+			node->init = expr();
 			expect(";");
 		}
 		if (!consume(";")) {
-			expr2 = expr();
+			node->cond = expr();
 			expect(";");
 		}
 		if (!consume(")")) {
-			expr3 = expr();
+			node->inc = expr();
 			expect(")");
 		}
-		node = new_node(ND_FOR, expr3, stmt());
-		node->offset = label;
-		node = new_node(ND_FOR, expr2, node);
-		node->offset = label;
-		node = new_node(ND_FOR, expr1, node);
-		node->offset = label;
-		label++;
+		node->then = stmt();
 		return node;
 	}
 	else if (consume_keyword("return")) {
 		is_return = true;
 	}
 	node = expr();
-	if (is_if) {
-		expect(")");
-		Node *then_ = stmt();
-		if (consume_keyword("else")) {
-			then_ = new_node(ND_ELSE, then_, stmt());
-			then_->offset = label;
-		}
-		node = new_node(ND_IF, node, then_);
-		node->offset = label;
-		label++;
-		return node;
-	} else if (is_while) {
-		expect(")");
-		node = new_node(ND_WHILE, node, stmt());
-		node->offset = label;
-		label++;
-		return node;
-	} else if (is_return) {
-		// fprintf(stderr, "OUTPUT RETURN !!\n");
-		node = new_node(ND_RETURN, node, NULL);
-	}
 	expect(";");
+	if (is_return) {
+		// fprintf(stderr, "OUTPUT RETURN !!\n");
+		node = new_node(ND_RETURN, node, 0);
+	}
 	return node;
 }
 

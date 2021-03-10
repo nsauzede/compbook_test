@@ -30,7 +30,6 @@ typedef enum {
 	ND_CALL,
 	ND_RETURN,
 	ND_IF,
-	ND_ELSE,
 	ND_WHILE,
 	ND_FOR,
 	ND_EQU,
@@ -50,27 +49,33 @@ typedef enum {
 
 typedef struct Node Node;
 
-struct Node {
-	NodeKind kind;
-	Node *lhs;	// for FUNC : lvar of the func ident
-	Node *rhs;	// for CALL ARGS : arg list via subsequent ->next
-				// for FUNC : list of args via lvar->next
-	Node *next;	// for BLOCK : compound stmt list via subsequent ->next
-				// for PROGRAM : list of FUNC
-	int val;
-	int offset;	// for IF/ELSE/WHILE : label number
-				// for LVAR : var offset in stack, in word machine multiple (eg: 8 on x64)
-	bool paren;	// false=>none, true=>this node is within '()'
-	bool boolean;	// expr is a boolean
-};
-
 typedef struct LVar LVar;
 
 struct LVar {
 	LVar *next;
 	char *name;
 	int len;
-	int offset;
+	int offset;	// var offset in stack, in word machine multiple (eg: 8 on x64)
+};
+
+struct Node {
+	NodeKind kind;
+	Node *next;
+	Node *lhs;	// for FUNC : lvar of the func ident
+	Node *rhs;	// for CALL ARGS : arg list via subsequent ->next
+				// for FUNC : list of args via lvar->next
+				// for PROGRAM : list of FUNC
+	Node *body;	// for BLOCK : compound stmt list via subsequent ->next
+	// for IF/WHILE/FOR :
+	Node *init;	// FOR
+	Node *cond;
+	Node *inc;	// FOR
+	Node *then;
+	Node *else_;
+	int val;
+	LVar *lvar;
+	bool paren;	// false=>none, true=>this node is within '()'
+	bool boolean;	// expr is a boolean
 };
 
 extern char *user_input;

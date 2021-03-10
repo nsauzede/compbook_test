@@ -11,7 +11,7 @@ static void gen_lval(Node *node) {
 		error("Left side value of assignment is not a variable");
 	}
 	// printf("\n/*hello*/\n");
-	printf("lvar%d", node->offset);
+	printf("lvar%d", node->lvar->offset);
 }
 
 static void gen(Node *node) {
@@ -23,9 +23,6 @@ static void gen(Node *node) {
 	}
 	bool is_return = false;
 	bool is_assign = false;
-	bool is_if = false;
-	bool is_else = false;
-	bool is_while = false;
 	bool cast_int_to_bool = false;
 	switch (node->kind) {
 		case ND_CALL:
@@ -59,27 +56,41 @@ static void gen(Node *node) {
 		}
 		case ND_FOR:
 			printf("for ");
-			gen(node->lhs);
+			gen(node->init);
 			printf(";");
-			gen(node->rhs->lhs);
+			gen(node->cond);
 			printf(";");
-			gen(node->rhs->rhs->lhs);
+			gen(node->inc);
 			printf("{\n");
-			gen(node->rhs->rhs->rhs);
+			gen(node->then);
 			printf("}/*end for*/\n");
 			return;
 		case ND_IF:
 			printf("if ");
-			cast_int_to_bool = true;
-			is_if = true;
-			break;
-		case ND_ELSE:
-			is_else = true;
-			break;
+			if (!node->cond->boolean) {
+				printf("0!=(");
+			}
+			gen(node->cond);
+			if (!node->cond->boolean) {
+				printf(")");
+			}
+			printf(" {\n");
+			if (node->else_) {
+				gen(node->then);
+				printf("} else {\n");
+				gen(node->else_);
+			} else {
+				gen(node->then);
+			}
+			printf("}\n");
+			return;
 		case ND_WHILE:
 			printf("for ");
-			is_while = true;
-			break;
+			gen(node->cond);
+			printf(" {\n");
+			gen(node->then);
+			printf("}\n");
+			return;
 		case ND_NUM:
 			printf("%d", node->val);
 			return;
@@ -117,9 +128,6 @@ static void gen(Node *node) {
 	if (cast_int_to_bool && !node->lhs->boolean) {
 		printf(")");		// close the int-to-bool cast paren
 	}
-	if (is_if || is_while) {
-		printf("{");
-	}
 
 	switch (node->kind) {
 		case ND_EQU:
@@ -156,46 +164,12 @@ static void gen(Node *node) {
 		// 	error("%s: Unknown node type %d\n", __func__, node->kind);
 	}
 
-	if (is_if && !node->rhs->rhs) {
-		printf("}");
-	}
-
 	if (is_return) {
 		printf("))");
 		return;
-	} else if (node->kind == ND_IF) {
-		// printf("/*if*/");
-		if (node->rhs->kind == ND_ELSE) {
-			// printf("/*ifelse*/");
-		} else {
-			// printf("/*ifnoteelse*/");
-		}
-	} else if (is_else) {
-		printf("} else {");
-	} else if (node->kind == ND_WHILE) {
-		// printf("\tpop rax\n");
-		// printf("\tcmp rax, 0\n");
-		// printf("\tje .Lend%d\n", node->offset);
 	}
 	gen(node->rhs);
 
-	if (is_else || is_while) {
-		printf("}");
-	}
-
-	if (node->kind == ND_WHILE) {
-		// printf("\tjmp .Lbegin%d\n", node->offset);
-	}
-	if (node->kind == ND_IF || node->kind == ND_WHILE) {
-		// printf("\t.Lend%d:\n", node->offset);
-	}
-	if (node->kind == ND_IF || node->kind == ND_ELSE || node->kind == ND_WHILE) {
-		return;
-	}
-
-	//printf("\tpop rdi\n");
-	//printf("\tpop rax\n");
-	//printf("\tpush rax\n");
 	if (node->paren) {
 		printf(")");
 	}
