@@ -6,12 +6,14 @@
 
 #include "9cc.h"
 
+int label_seq = 0;
+
 static void gen_lval(Node *node) {
 	if (node->kind != ND_LVAR) {
 		error("Left side value of assignment is not a variable");
 	}
 	printf("\tmov rax, rbp\n");
-	printf("\tsub rax, %d\n", node->offset * 8);
+	printf("\tsub rax, %d\n", node->lvar->offset * 8);
 	printf("\tpush rax\n");
 }
 
@@ -46,31 +48,60 @@ static void gen(Node *node) {
 			printf("\tpush rax\n");
 			return;
 		}
+		case ND_RETURN:
+			gen(node->lhs);
+			printf("\tpop rax\n");
+			printf("\tmov rsp,rbp\n");
+			printf("\tpop rbp\n");
+			printf("\tret\n");
+			return;
 		case ND_BLOCK:
-		{
-			Node *next = node->next;
-			while (next) {
+			for (Node *next = node->next; next; next = next->next) {
 				gen(next);
 				printf("\tpop rax\n");
-				next = next->next;
 			}
 			return;
-		}
 		case ND_FOR:
-			gen(node->lhs);
-			printf("\t.Lbegin%d:\n", node->offset);
-			gen(node->rhs->lhs);
+			gen(node->init);
+			printf("\t.Lbegin%d:\n", label_seq);
+			gen(node->cond);
 			printf("\tpop rax\n");
 			printf("\tcmp rax, 0\n");
-			printf("\tje .Lend%d\n", node->offset);
-			gen(node->rhs->rhs->rhs);
-			gen(node->rhs->rhs->lhs);
-			printf("\tjmp .Lbegin%d\n", node->offset);
-			printf("\t.Lend%d:\n", node->offset);
+			printf("\tje .Lend%d\n", label_seq);
+			gen(node->then);
+			gen(node->inc);
+			printf("\tjmp .Lbegin%d\n", label_seq);
+			printf("\t.Lend%d:\n", label_seq);
+			label_seq++;
+			return;
+		case ND_IF:
+			gen(node->cond);
+			printf("\tpop rax\n");
+			printf("\tcmp rax, 0\n");
+			if (node->else_) {
+				printf("\tje .Lelse%d\n", label_seq);
+				gen(node->then);
+				printf("\tjmp .Lend%d\n", label_seq);
+				printf("\t.Lelse%d:\n", label_seq);
+				gen(node->else_);
+			} else {
+				printf("\tje .Lend%d\n", label_seq);
+				gen(node->then);
+			}
+			printf("\t.Lend%d:\n", label_seq);
+			label_seq++;
 			return;
 		case ND_WHILE:
-			printf("\t.Lbegin%d:\n", node->offset);
-			break;
+			printf("\t.Lwhilebegin%d:\n", label_seq);
+			gen(node->cond);
+			printf("\tpop rax\n");
+			printf("\tcmp rax, 0\n");
+			printf("\tje .Lwhileend%d\n", label_seq);
+			gen(node->then);
+			printf("\tjmp .Lwhilebegin%d\n", label_seq);
+			printf("\t.Lwhileend%d:\n", label_seq);
+			label_seq++;
+			return;
 		case ND_NUM:
 			printf("\tpush %d\n", node->val);
 			return;
@@ -90,38 +121,7 @@ static void gen(Node *node) {
 			return;
 	}
 	gen(node->lhs);
-	if (node->kind == ND_RETURN) {
-		printf("\tpop rax\n");
-		printf("\tmov rsp,rbp\n");
-		printf("\tpop rbp\n");
-		printf("\tret\n");
-		return;
-	} else if (node->kind == ND_IF) {
-		printf("\tpop rax\n");
-		printf("\tcmp rax, 0\n");
-		if (node->rhs->kind == ND_ELSE) {
-			printf("\tje .Lelse%d\n", node->offset);
-		} else {
-			printf("\tje .Lend%d\n", node->offset);
-		}
-	} else if (node->kind == ND_ELSE) {
-		printf("\tjmp .Lend%d\n", node->offset);
-		printf("\t.Lelse%d:\n", node->offset);
-	} else if (node->kind == ND_WHILE) {
-		printf("\tpop rax\n");
-		printf("\tcmp rax, 0\n");
-		printf("\tje .Lend%d\n", node->offset);
-	}
 	gen(node->rhs);
-	if (node->kind == ND_WHILE) {
-		printf("\tjmp .Lbegin%d\n", node->offset);
-	}
-	if (node->kind == ND_IF || node->kind == ND_WHILE) {
-		printf("\t.Lend%d:\n", node->offset);
-	}
-	if (node->kind == ND_IF || node->kind == ND_ELSE || node->kind == ND_WHILE) {
-		return;
-	}
 	printf("\tpop rdi\n");
 	printf("\tpop rax\n");
 	switch (node->kind) {
