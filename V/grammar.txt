@@ -1,3 +1,4 @@
 expr    = mul ("+" mul | "-" mul)*
-mul = primary ("*" primary | "/" primary)*
+mul     = primary ("*" primary | "/" primary)*
+unary   = ("+" | "-")? primary
 primary = num | "(" expr ")"

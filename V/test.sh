@@ -1,13 +1,9 @@
 #!/bin/bash
 assert() {
-    expected="$1"
-    input="$2"
-
+    expected="$1";input="$2"
     ./9cc "$input" > tmp.v
-    v -o tmp tmp.v
-    ./tmp
+    v -o tmp tmp.v && ./tmp
     actual="$?"
-
     if [ "$actual" = "$expected" ]; then
         echo "$input => $actual"
     else
@@ -23,5 +19,4 @@ assert 41 " 12 + 34 - 5 "
 assert 47 '5+6*7'
 assert 15 '5*(9-6)'
 assert 4 '(3+5)/2'
-
-echo OK
+assert 10 '-10+20'
