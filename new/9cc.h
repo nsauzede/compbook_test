@@ -80,13 +80,16 @@ struct Node {
 
 extern char *user_input;
 extern Token *token;
-extern Node *code[100];
+// extern Node *code[100];
+extern Node *code;
 extern LVar *locals;
 
 void error_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);
 bool consume(char *op);
+bool peek(char *op);
 Token *consume_ident();
+Token *expect_ident();
 bool consume_keyword(char *op);
 void expect(char *op);
 int expect_number();

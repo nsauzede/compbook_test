@@ -1,6 +1,6 @@
 program    = func*
-func       = ident "(" (expr ("," expr)*)? ")" body
-body       = stmt*
+func       = ident "(" (ident ("," ident)*)? ")" body
+body       = "{" stmt* "}"
 stmt       = ("return")? expr ";"
     | "{" stmt* "}"
     | "if" "(" expr ")" stmt ("else" stmt)?

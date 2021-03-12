@@ -231,21 +231,23 @@ Node *expr() {
 Node *stmt() {
 	Node *node;
 	bool is_return = false;
-	if (consume("}")) {
+	if (peek("}")) {
 		return 0;
 	}
 	if (consume("{")) {
 		node = new_node(ND_BLOCK, 0, 0);
-		Node **next = &node->next;
+		Node **next = &node->body;
 		while (1) {
 			Node *stmt_ = stmt();
 			if (!stmt_) {
 				break;
 			}
-			// fprintf(stderr, "ADDED STMT TO LIST\n");
+			// fprintf(stderr, "ADDED STMT TO LIST : ");print_node(stmt_, 0);
 			*next = stmt_;
 			next = &stmt_->next;
 		}
+		expect("}");
+		// fprintf(stderr, "DONE WITH BLOCK\n");
 		return node;
 	}
 	if (consume_keyword("if")) {
@@ -297,24 +299,36 @@ Node *stmt() {
 	return node;
 }
 
-Node *code[100];
+// Node *code[100];
+Node g_code;
+Node *code;
 void body() {
-	int i = 0;
+	expect("{");
+	code = new_node(ND_BLOCK, 0, 0);
+	Node **next = &code->body;
 	while (!at_eof()) {
-		code[i++] = stmt();
+		Node *stmt_ = stmt();
+		if (!stmt_) {
+			break;
+		}
+		// fprintf(stderr, "ADDED STMT TO BODY : ");print_node(stmt_, 0);
+		*next = stmt_;
+		next = &stmt_->next;
 	}
-	code[i] = NULL;
+	expect("}");
+	// fprintf(stderr, "DONE WITH BODY\n");
 	int do_print_nodes = 0;
 	char *env = getenv("PRINT_NODES");
 	if (env) {
 		sscanf(env, "%d", &do_print_nodes);
 	}
 	if (do_print_nodes) {
-		print_nodes(code);
+		print_node(code, 0);
 	}
 }
 
 void func() {
+
 	body();
 }
 
