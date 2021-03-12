@@ -91,6 +91,19 @@ void print_tokens(Token *token) {
 	}
 }
 
+bool peek(char *op) {
+	// 👻 Important : we must both check token len AND token contents ! else "=" can be taken for "=="
+	if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)) {
+		return false;
+	}
+#if 0
+	if (!strcmp(op,"}")) {
+		fprintf(stderr, "%s: SEEN } !!\n", __func__);
+	}
+#endif
+	return true;
+}
+
 // When the next token is the expected symbol, read the token one more time and
 // Return true. Otherwise, return false.
 bool consume(char *op) {
@@ -98,6 +111,11 @@ bool consume(char *op) {
 	if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)) {
 		return false;
 	}
+#if 0
+	if (!strcmp(op,"}")) {
+		fprintf(stderr, "%s: SEEN } !!\n", __func__);
+	}
+#endif
 	token = token->next;
 	return true;
 }
@@ -116,6 +134,14 @@ Token *consume_ident() {
 	if (token->kind == TK_IDENT) {
 		tok = token;
 		token = token->next;
+	}
+	return tok;
+}
+
+Token *expect_ident() {
+	Token *tok = consume_ident();
+	if (!tok) {
+		error_at(token->str, "expected identifier");
 	}
 	return tok;
 }
@@ -141,7 +167,7 @@ int expect_number() {
 }
 
 bool at_eof() {
-	return token->kind == TK_EOF;
+	return token == 0 || token->kind == TK_EOF;
 }
 
 // Create a new token and connect it to cur

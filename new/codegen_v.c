@@ -44,7 +44,7 @@ static void gen(Node *node) {
 		}
 		case ND_BLOCK:
 		{
-			Node *next = node->next;
+			Node *next = node->body;
 			// printf("/*begin block*/\n");
 			while (next) {
 				gen(next);
@@ -187,9 +187,11 @@ void generate_v() {
 	}
 	// printf("mut ret:=0\n");
 	// printf("ret=");
-	for (int i = 0; code[i]; i++) {
-		gen(code[i]);
-		//printf("\tpop rax\n");
+	Node *node = code;
+	while (node) {
+		// printf("//node %d\n", node->kind);
+		gen(node);
+		node = node->next;
 	}
 	printf("\n");
 	//printf("exit(ret)\n");

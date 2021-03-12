@@ -56,7 +56,7 @@ static void gen(Node *node) {
 			printf("\tret\n");
 			return;
 		case ND_BLOCK:
-			for (Node *next = node->next; next; next = next->next) {
+			for (Node *next = node->body; next; next = next->next) {
 				gen(next);
 				printf("\tpop rax\n");
 			}
@@ -192,9 +192,12 @@ void generate() {
 	printf("\tpush rbp\n");
 	printf("\tmov rbp, rsp\n");
 	printf("\tsub rsp, 208\n");
-	for (int i = 0; code[i]; i++) {
-		gen(code[i]);
-		printf("\tpop rax\n");
+	Node *node = code;
+	while (node) {
+		// printf("//node %d\n", node->kind);
+		gen(node);
+		// printf("\tpop rax\n");
+		node = node->next;
 	}
 	printf("\tmov rsp,rbp\n");
 	printf("\tpop rbp\n");
