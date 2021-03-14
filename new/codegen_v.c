@@ -84,13 +84,6 @@ static void gen(Node *node) {
 			}
 			printf("}\n");
 			return;
-		case ND_WHILE:
-			printf("for ");
-			gen(node->cond);
-			printf(" {\n");
-			gen(node->then);
-			printf("}\n");
-			return;
 		case ND_NUM:
 			printf("%d", node->val);
 			return;
@@ -107,13 +100,11 @@ static void gen(Node *node) {
 			// printf("/*RETURN !!*/");
 			is_return = true;
 			break;
-		case ND_RELINF:
+		case ND_LT:
 			// printf("/*RELINF BOOL*/");
-		case ND_EQU:
-		case ND_EQUNOT:
-		case ND_RELINFEQ:
-		case ND_RELSUP:
-		case ND_RELSUPEQ:
+		case ND_EQ:
+		case ND_NE:
+		case ND_LE:
 			node->boolean = true;
 			break;
 	}
@@ -130,23 +121,17 @@ static void gen(Node *node) {
 	}
 
 	switch (node->kind) {
-		case ND_EQU:
+		case ND_EQ:
 			printf("==");
 			break;
-		case ND_EQUNOT:
+		case ND_NE:
 			printf("!=");
 			break;
-		case ND_RELINF:
+		case ND_LT:
 			printf("<");
 			break;
-		case ND_RELINFEQ:
+		case ND_LE:
 			printf("<=");
-			break;
-		case ND_RELSUP:
-			printf(">");
-			break;
-		case ND_RELSUPEQ:
-			printf(">=");
 			break;
 		case ND_ADD:
 			printf("+");

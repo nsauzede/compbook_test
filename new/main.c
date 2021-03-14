@@ -13,8 +13,8 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Usage: %s <'code'>\n", argv[0]);
 		return 1;
 	}
-	tokenize(argv[1]);
-	parse();
-	generate();
+	Token *tok = tokenize(argv[1]);
+	Obj *obj = parse(tok);
+	codegen(obj);
 	return 0;
 }

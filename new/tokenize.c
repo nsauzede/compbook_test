@@ -10,36 +10,39 @@ Token *token;
 
 #define RED() "\x1b[31m"
 #define NRM() "\x1b[0m"
-void error_at(char *loc, char *fmt, ...) {
-	int pos = loc - user_input;
-	va_list ap;
-	fprintf(stderr, "<stdin>:1:%d: %serror%s: ", pos + 1, RED(), NRM());
-	va_start(ap, fmt);
+static char *user_input;
+static void verror_at(char *loc, int len, char *fmt, va_list ap) {
+	int pos = 0;
+	if (loc) {
+		pos = loc - user_input;
+		fprintf(stderr, "<stdin>:1:%d: %serror%s: ", pos + 1, RED(), NRM());
+	}
 	vfprintf(stderr, fmt, ap);
-	va_end(ap);
 	fprintf(stderr, "\n");
-	fprintf(stderr, "%s\n", user_input);
-	fprintf(stderr, "%*s", pos, " ");
-	fprintf(stderr, "^\n");
+	if (loc) {
+		fprintf(stderr, "%s\n", user_input);
+		fprintf(stderr, "%*s", pos, "");
+		fprintf(stderr, "^ len=%d\n", len);
+	}
 	exit(1);
 }
 
-// Function to report an error
-// takes the same arguments as printf
 void error(char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	fprintf(stderr, "\n");
-	exit(1);
+	verror_at(0, 0, fmt, ap);
 }
 
-int is_alnum(char c) {
-	return ('a' <= c && c <= 'z') ||
-		('A' <= c && c <= 'Z') ||
-		('0' <= c && c <= '9') ||
-		(c == '_');
+void error_at(char *loc, char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	verror_at(loc, 0, fmt, ap);
+}
+
+void error_tok(Token *tok, char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	verror_at(tok->loc, tok->len, fmt, ap);
 }
 
 void print(char *s) {
@@ -48,12 +51,12 @@ void print(char *s) {
 
 void print_str(char *s, Token *token) {
 	char buf[1024];
-	snprintf(buf, token->len + 1, "%s", token->str);
-	fprintf(stderr, "%s '%s'\n", s, buf);
+	snprintf(buf, token->len + 1, "%s", token->loc);
+	fprintf(stderr, "%s'%s'\n", s, buf);
 }
 
 void print_num(char *s, Token *token) {
-	fprintf(stderr, "%s '%d'\n", s, token->val);
+	fprintf(stderr, "%s'%d'\n", s, token->val);
 }
 
 void print_token(Token *token) {
@@ -61,225 +64,146 @@ void print_token(Token *token) {
 		return;
 	}
 	switch (token->kind) {
-		case TK_RETURN:print("RETURN");break;
-		case TK_IF:print("IF");break;
-		case TK_ELSE:print("ELSE");break;
-		case TK_WHILE:print("WHILE");break;
-		case TK_FOR:print("FOR");break;
 		case TK_IDENT:
-			print_str("IDENT", token);
+			print_str("IDN", token);
+			break;
+		case TK_PUNCT:
+			print_str("PUN", token);
 			break;
 		case TK_NUM:
 			print_num("NUM", token);
 			break;
-		case TK_RESERVED:
-			print_str("RESVD", token);
+		case TK_KEYWORD:
+			print_str("KEY", token);
 			break;
-		case TK_EOF:fprintf(stderr, "EOF\n");break;
+		case TK_EOF:
+			fprintf(stderr, "EOF\n");
+			break;
 		default:fprintf(stderr, "Whaat about token %d ??\n", token->kind);break;
 	}
 }
 
 void print_tokens(Token *token) {
-	int cont = 1;
 	while (token) {
 		print_token(token);
-		if (token->kind == TK_EOF) {
-			break;
-		}
 		token = token->next;
 	}
 }
 
-bool peek(char *op) {
-	// 👻 Important : we must both check token len AND token contents ! else "=" can be taken for "=="
-	if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)) {
-		return false;
-	}
-#if 0
-	if (!strcmp(op,"}")) {
-		fprintf(stderr, "%s: SEEN } !!\n", __func__);
-	}
-#endif
-	return true;
+bool equal(Token *tok, char *op) {
+	return !memcmp(tok->loc, op, tok->len) && strlen(op) == tok->len;
 }
 
-// When the next token is the expected symbol, read the token one more time and
-// Return true. Otherwise, return false.
-bool consume(char *op) {
-	// 👻 Important : we must both check token len AND token contents ! else "=" can be taken for "=="
-	if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)) {
-		return false;
+Token *skip(Token *tok, char *op) {
+	if (!equal(tok, op)) {
+		error_tok(tok, "expected '%s'", op);
 	}
-#if 0
-	if (!strcmp(op,"}")) {
-		fprintf(stderr, "%s: SEEN } !!\n", __func__);
-	}
-#endif
-	token = token->next;
-	return true;
+	return tok->next;
 }
 
-bool consume_keyword(char *op) {
-	// if (strncmp(token->str, op, token->len)) {
-	if (strlen(op) != token->len || memcmp(token->str, op, token->len)) {
-		return false;
+bool consume(Token **rest, Token *tok, char *str) {
+	if (equal(tok, str)) {
+		*rest = tok->next;
+		return true;
 	}
-	token = token->next;
-	return true;
-}
-
-Token *consume_ident() {
-	Token *tok = 0;
-	if (token->kind == TK_IDENT) {
-		tok = token;
-		token = token->next;
-	}
-	return tok;
-}
-
-Token *expect_ident() {
-	Token *tok = consume_ident();
-	if (!tok) {
-		error_at(token->str, "expected identifier");
-	}
-	return tok;
-}
-
-// If the next token is the expected symbol, read the token one more time.
-// Otherwise, report an error.
-void expect(char *op) {
-	if (token->kind != TK_RESERVED || strncmp(token->str, op, token->len)) {
-		error_at(token->str, "expected '%c'", *op);
-	}
-	token = token->next;
-}
-
-// If the next token is a number, read the token one more time and return the number.
-// Otherwise, report an error.
-int expect_number() {
-	if (token->kind != TK_NUM) {
-		error_at(token->str, "It's not a number");
-	}
-	int val = token->val;
-	token = token->next;
-	return val;
-}
-
-bool at_eof() {
-	return token == 0 || token->kind == TK_EOF;
+	*rest = tok;
 }
 
 // Create a new token and connect it to cur
-Token *new_token(TokenKind kind, Token *cur, char *str) {
+static Token *new_token(TokenKind kind, char *start, char *end) {
 	Token *tok = calloc(1, sizeof(Token));
 	tok->kind = kind;
-	tok->str = str;
-	cur->next = tok;
-	// print_token(tok);
+	tok->loc = start;
+	tok->len = end - start;
 	return tok;
 }
 
-char *user_input;
-
-bool is_keyword(char *p, char *keyword) {
-	int len = strlen(keyword);
-	return !strncmp(p, keyword, len) && !is_alnum(p[len]);
+static bool startswith(char *p, char *with) {
+	return !strncmp(p, with, strlen(with));
 }
+
+// Returns true if c is valid as the first character of an identifier.
+static bool is_ident1(char c) {
+  return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
+}
+
+// Returns true if c is valid as a non-first character of an identifier.
+static bool is_ident2(char c) {
+  return is_ident1(c) || ('0' <= c && c <= '9');
+}
+
+static int read_punct(char *p) {
+	if (startswith(p, "==") || startswith(p, "!=") ||
+		startswith(p, "<=") || startswith(p, ">=")) {
+		return 2;
+	}
+	return ispunct(*p) ? 1 : 0;
+}
+
+static bool is_keyword(Token *tok) {
+  static char *kw[] = {
+    "return", "if", "else", "for", "while", "int", "sizeof",
+  };
+
+  for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++)
+    if (equal(tok, kw[i]))
+      return true;
+  return false;
+}
+
+static void convert_keywords(Token *tok) {
+  for (Token *t = tok; t->kind != TK_EOF; t = t->next)
+    if (is_keyword(t))
+      t->kind = TK_KEYWORD;
+}
+
 // tokenize the input string p and return it
-Token *tokenize(char *input) {
-	user_input = input;
-	char *p = user_input;
-	Token head;
-	head.next = NULL;
+Token *tokenize(char *p) {
+	user_input = p;
+	Token head = {};
 	Token *cur = &head;
 	while (*p) {
-		if (isspace(*p)) {
-			p++;
-			continue;
-		}
-		if (!strncmp(p, "//", 2)) {
+		if (startswith(p, "//")) {
 			p += 2;
 			while (*p && *p != '\n') {
 				p++;
 			}
 			continue;
 		}
-		// Multi-char reserver keywords
-		if (strchr("<>=!", *p)) {
-			int len = 0;
-			if (!strncmp(p, "<=", 2)) {
-				len = 2;
-			} else if (!strncmp(p, ">=", 2)) {
-				len = 2;
-			} else if (!strncmp(p, "==", 2)) {
-				len = 2;
-			} else if (!strncmp(p, "!=", 2)) {
-				len = 2;
-			}
-			if (len) {
-				cur = new_token(TK_RESERVED, cur, p);
-				p += len;
-				cur->len = len;
-				continue;
-			}
-		}
-		// One char reserved keywords
-		if (strchr("+-*/()<>;={},", *p)) {
-			cur = new_token(TK_RESERVED, cur, p++);
-			cur->len = 1;
+		if (isspace(*p)) {
+			p++;
 			continue;
 		} else if (isdigit(*p)) {
-			cur = new_token(TK_NUM, cur, p);
-			char *old_p = p;
-			cur->val = strtol(p, &p, 10);
-			cur->len = p - old_p;
+			cur = cur->next = new_token(TK_NUM, p, p);
+			char *q = p;
+			cur->val = strtoul(p, &p, 10);
+			cur->len = p - q;
 			continue;
-		} else if (is_keyword(p, "return")) {
-			cur = new_token(TK_RETURN, cur, p);
-			cur->len = 6;
-			p += cur->len;
-			continue;
-		} else if (is_keyword(p, "if")) {
-			cur = new_token(TK_IF, cur, p);
-			cur->len = 2;
-			p += cur->len;
-			continue;
-		} else if (is_keyword(p, "else")) {
-			cur = new_token(TK_ELSE, cur, p);
-			cur->len = 4;
-			p += cur->len;
-			continue;
-		} else if (is_keyword(p, "while")) {
-			cur = new_token(TK_WHILE, cur, p);
-			cur->len = 5;
-			p += cur->len;
-			continue;
-		} else if (is_keyword(p, "for")) {
-			cur = new_token(TK_FOR, cur, p);
-			cur->len = 3;
-			p += cur->len;
-			continue;
-		} else if (is_alnum(*p)) {
-			char *old_p = p;
-			while (is_alnum(*p)) {
+		} else if (is_ident1(*p)) {
+			char *start = p;
+			do {
 				p++;
-			}
-			cur = new_token(TK_IDENT, cur, old_p);
-			cur->len = p - old_p;
+			} while (is_ident2(*p));
+			cur = cur->next = new_token(TK_IDENT, start, p);
 			continue;
 		}
-		error_at(p, "I can't tokenize '%c'", *p);
+		int punct_len = read_punct(p);
+		if (punct_len) {
+			cur = cur->next = new_token(TK_PUNCT, p, p + punct_len);
+			p += punct_len;
+			continue;
+		}
+		error_at(p, "invalid token");
 	}
-	new_token(TK_EOF, cur, p);
-	token = head.next;
+	cur = cur->next = new_token(TK_EOF, p, p);
+	convert_keywords(head.next);
 	int do_print_tokens = 0;
 	char *env = getenv("PRINT_TOKENS");
 	if (env) {
 		sscanf(env, "%d", &do_print_tokens);
 	}
 	if (do_print_tokens) {
-		print_tokens(token);
+		print_tokens(head.next);
 	}
 	return head.next;
 }
