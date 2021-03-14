@@ -1,16 +1,27 @@
-program    = func*
-func       = ident "(" (ident ("," ident)*)? ")" body
-body       = "{" stmt* "}"
-stmt       = ("return")? expr ";"
-    | "{" stmt* "}"
+program       = (function-definition | global-variable)*
+function      = declspec declarator
+type-suffix   = "(" func-params
+              | "[" num "]" type-suffix
+              | epsilon
+func-params   = (param ("," param)*)? ")"
+param         = declspec declarator
+declaration   = declspec (declarator ("=" expr)? (",) ("," declarator ("=" expr)?)*)? ";"
+declarator    = "*"* ident type-suffix
+declspec      = "int"
+stmt          = "return" expr ";"
     | "if" "(" expr ")" stmt ("else" stmt)?
+    | "for" "(" expr-stmt expr? ";" expr? ")" stmt
     | "while" "(" expr ")" stmt
-    | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-expr       = assign
-assign     = equality ("=" assign)?
-equality   = relational ("==" relational | "!=" relational)*
-relational = add ("<" add | "<=" add | ">" add | ">=" add)*
-add        = mul ("+" mul | "-" mul)*
-mul        = unary ("*" unary | "/" unary)*
-unary      = ("+" | "-")? primary
-primary    = num | ident ("(" (expr ("," expr)*)? ")")? | "(" expr ")"
+    | "{" compound-stmt
+    | expr-stmt
+compound-stmt = (declaration | stmt)* "}"
+expr-stmt     = expr? ";"
+expr          = assign
+assign        = equality ("=" assign)?
+equality      = relational ("==" relational | "!=" relational)*
+relational    = add ("<" add | "<=" add | ">" add | ">=" add)*
+add           = mul ("+" mul | "-" mul)*
+mul           = unary ("*" unary | "/" unary)*
+unary         = ("+" | "-") unary | primary
+funcall       = ident "(" (assign ("," assign)*)? ")"
+primary       = "(" expr ")" | "sizeof" unary | ident func-args? | num
