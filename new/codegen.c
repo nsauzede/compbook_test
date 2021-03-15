@@ -100,7 +100,7 @@ static void gen_expr(Node *node) {
 			gen_expr(node->rhs);
 			store();
 			return;
-		case ND_FUNCALL: ;
+		case ND_FUNCALL: {
 			int nargs = 0;
 			for (Node *arg = node->args; arg; arg = arg->next) {
 				gen_expr(arg);
@@ -115,6 +115,7 @@ static void gen_expr(Node *node) {
 			printf("\tmov $0, %%rax\n");
 			printf("\tcall %s\n", node->funcname);
 			return;
+		}
 	}
 	gen_expr(node->rhs);
 	push();
@@ -214,7 +215,7 @@ static void assign_lvar_offsets(Obj *prog) {
   }
 }
 
-void emit_data(Obj *prog) {
+static void emit_data(Obj *prog) {
 	for (Obj *obj = prog; obj; obj = obj->next) {
 		if (obj->is_function) {
 			continue;
@@ -223,7 +224,7 @@ void emit_data(Obj *prog) {
 	}
 }
 
-void emit_text(Obj *prog) {
+static void emit_text(Obj *prog) {
 	for (Obj *obj = prog; obj; obj = obj->next) {
 		if (!obj->is_function) {
 			continue;
@@ -259,20 +260,11 @@ void codegen(Obj *prog) {
 		sscanf(env, "%d", &gen_v);
 	}
 	if (gen_v) {
-		extern void generate_v();
-		// generate_v();
+		extern void codegen_v(Obj *prog);
+		codegen_v(prog);
 		return;
 	}
 	assign_lvar_offsets(prog);
 	emit_data(prog);
 	emit_text(prog);
-/*
-	Node *node = code;
-	while (node) {
-		// printf("//node %d\n", node->kind);
-		gen(node);
-		// printf("\tpop rax\n");
-		node = node->next;
-	}
-*/
 }

@@ -5,21 +5,10 @@
 #include <string.h>
 
 #include "9cc.h"
-
-static void gen_lval(Node *node) {
-	if (node->kind != ND_LVAR) {
-		error("Left side value of assignment is not a variable");
-	}
-	// printf("\n/*hello*/\n");
-	printf("lvar%d", node->lvar->offset);
-}
-
+#if 0
 static void gen(Node *node) {
 	if (!node) {
 		return;
-	}
-	if (node->paren) {
-		printf("(");
 	}
 	bool is_return = false;
 	bool is_assign = false;
@@ -65,29 +54,10 @@ static void gen(Node *node) {
 			gen(node->then);
 			printf("}/*end for*/\n");
 			return;
-		case ND_IF:
-			printf("if ");
-			if (!node->cond->boolean) {
-				printf("0!=(");
-			}
-			gen(node->cond);
-			if (!node->cond->boolean) {
-				printf(")");
-			}
-			printf(" {\n");
-			if (node->else_) {
-				gen(node->then);
-				printf("} else {\n");
-				gen(node->else_);
-			} else {
-				gen(node->then);
-			}
-			printf("}\n");
-			return;
 		case ND_NUM:
 			printf("%d", node->val);
 			return;
-		case ND_LVAR:
+		case ND_VAR:
 			gen_lval(node);
 			return;
 		case ND_ASSIGN:
@@ -155,29 +125,172 @@ static void gen(Node *node) {
 	}
 	gen(node->rhs);
 
+}
+#endif
+
+static void gen_lval(Node *node) {
+	if (node->kind != ND_VAR) {
+		error("Left side value of assignment is not a variable");
+	}
+	printf("cv_%s%d", node->var->name, node->var->offset);
+}
+
+static void gen_expr(Node *node) {
+	if (!node)return;
+	if (node->paren) {
+		printf("(");
+	}
+	switch (node->kind) {
+		case ND_NUM:
+			printf("%d", node->val);
+			goto leave;
+		case ND_NEG:
+			printf("- ");
+			gen_expr(node->lhs);
+			goto leave;
+		case ND_VAR:
+			gen_lval(node);
+			goto leave;
+		case ND_ASSIGN:
+			gen_lval(node->lhs);
+			printf(" = ");
+			gen_expr(node->rhs);
+			printf("\n");
+			goto leave;
+		case ND_FUNCALL: {
+			printf("%s(", node->funcname);
+			for (Node *arg = node->args; arg; arg = arg->next) {
+				gen_expr(arg);
+			}
+			printf(")");
+			goto leave;
+		}
+	}
+	gen_expr(node->lhs);
+	switch (node->kind) {
+		case ND_EQ:
+			printf("==");
+			break;
+		case ND_NE:
+			printf("!=");
+			break;
+		case ND_LT:
+			printf("<");
+			break;
+		case ND_LE:
+			printf("<=");
+			break;
+		case ND_ADD:
+			printf("+");
+			break;
+		case ND_SUB:
+			printf("-");
+			break;
+		case ND_MUL:
+			printf("*");
+			break;
+		case ND_DIV:
+			printf("/");
+			break;
+		default:
+			error("%s: Unknown node type %d\n", __func__, node->kind);
+	}
+	gen_expr(node->rhs);
+	leave:
 	if (node->paren) {
 		printf(")");
 	}
 }
 
-void generate_v() {
-	LVar *local = locals;
-	while (local) {
-		if (local->len) {
-			char buf[1000];
-			snprintf(buf, local->len + 1, "%s", local->name);
-			printf("mut lvar%d := 0	// %s %d\n", local->offset, buf, local->offset);
-		}
-		local = local->next;
+static void gen_stmt(Node *node) {
+	if (!node)return;
+	switch (node->kind) {
+		case ND_IF:
+			printf("if ");
+			if (!node->cond->boolean) {
+				printf("0!=(");
+			}
+			gen_expr(node->cond);
+			if (!node->cond->boolean) {
+				printf(")");
+			}
+			printf(" {\n");
+			gen_stmt(node->then);
+			if (node->els) {
+				printf("} else {\n");
+				gen_stmt(node->els);
+			}
+			printf("}\n");
+			return;
+		case ND_FOR:
+			printf("for ");
+			gen_stmt(node->init);
+			printf(";");
+			gen_expr(node->cond);
+			printf(";");
+			gen_expr(node->inc);
+			printf("{\n");
+			gen_stmt(node->then);
+			printf("}\n");
+			return;
+		case ND_BLOCK:
+			for (Node *n = node->body; n; n = n->next) {
+				gen_stmt(n);
+			}
+			return;
+		case ND_RETURN:
+			printf("\treturn int(");
+			gen_expr(node->lhs);
+			printf(")\n");
+			return;
+		case ND_EXPR_STMT:
+			gen_expr(node->lhs);
+			return;
 	}
-	// printf("mut ret:=0\n");
-	// printf("ret=");
-	Node *node = code;
-	while (node) {
-		// printf("//node %d\n", node->kind);
-		gen(node);
-		node = node->next;
+	error_tok(node->tok, "invalid statement");
+}
+
+static void emit_data(Obj *prog) {
+	for (Obj *obj = prog; obj; obj = obj->next) {
+		if (obj->is_function) {
+			continue;
+		}
+		fprintf(stderr, "//var %s local=%d\n", obj->name, (int)obj->is_local);
+	}
+}
+
+static void emit_text(Obj *prog) {
+	for (Obj *obj = prog; obj; obj = obj->next) {
+		if (!obj->is_function) {
+			continue;
+		}
+		printf("fn cf_%s() int {\n", obj->name);
+		for (Obj *var = obj->locals; var; var = var->next) {
+			printf("\tmut cv_%s%d := 0\n", var->name, var->offset);
+		}
+		gen_stmt(obj->body);
+		printf("}\n");
+		break;
 	}
 	printf("\n");
-	//printf("exit(ret)\n");
+	printf("exit(cf_main())\n");
+}
+
+// Assign offsets to local variables.
+static void assign_lvar_offsets(Obj *prog) {
+  for (Obj *fn = prog; fn; fn = fn->next) {
+    if (!fn->is_function)
+      continue;
+    
+    int offset = 0;
+    for (Obj *var = fn->locals; var; var = var->next) {
+		var->offset = offset++;	// fake offset to make unique var names within a func
+    }
+  }
+}
+
+void codegen_v(Obj *prog) {
+	assign_lvar_offsets(prog);
+	emit_data(prog);
+	emit_text(prog);
 }

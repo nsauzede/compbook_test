@@ -1,8 +1,8 @@
 CFLAGS:=-std=c11 -g
 LDFLAGS+=-static
 CFLAGS+=-O0
-# SRCS:=$(wildcard *.c)
-SRCS:=codegen.c main.c parse.c tokenize.c type.c
+ SRCS:=$(wildcard *.c)
+#SRCS:=codegen.c main.c parse.c tokenize.c type.c
 OBJS:=$(SRCS:.c=.o)
 
 TARGET:=9cc
@@ -14,7 +14,7 @@ all: $(TARGET)
 
 test: $(TARGET)
 	./test.sh
-	# ./test_v.sh
+	./test_v.sh
 
 check: $(TARGET)
 	./$(TARGET) 123 > tmp.s

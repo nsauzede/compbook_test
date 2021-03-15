@@ -21,9 +21,9 @@ static Node *funcall(Token **rest, Token *tok);
 
 static void print_node(Node *node, int depth) {
 	if (!node) {
-		depth;
+		return;
 	}
-	fprintf(stderr, "%*s", depth, "");
+	fprintf(stderr, "%*s%d", depth, "", depth);
 	if (node->kind == ND_FUNCALL) {
 		LVar *lvar = (LVar *)node->lhs;
 		char buf[1000];
@@ -33,19 +33,15 @@ static void print_node(Node *node, int depth) {
 	}
 	print_node(node->lhs, depth);
 	switch (node->kind) {
-		case ND_BLOCK:
-		{
-			Node *next = node->next;
-			fprintf(stderr, "BLOCK\n");
-			while (next) {
-				print_node(next, depth + 1);
-				// fprintf(stderr, ";");
-				next = next->next;
+		case ND_BLOCK: {
+			fprintf(stderr, "BLOCK %p,%p\n", node->lhs, node->rhs);
+			for (Node *n = node->body; n; n = n->next) {
+				print_node(n, depth + 1);
 			}
-			// fprintf(stderr, "}\n");
 			break;
 		}
 		case ND_RETURN:fprintf(stderr, "RETURN\n");break;
+		case ND_MUL:fprintf(stderr, "MUL\n");break;
 		case ND_IF:fprintf(stderr, "IF\n");break;
 		case ND_FOR:fprintf(stderr, "FOR\n");break;
 		case ND_EQ:fprintf(stderr, "EQ\n");break;
@@ -54,9 +50,19 @@ static void print_node(Node *node, int depth) {
 		case ND_ASSIGN:fprintf(stderr, "ASSIGN\n");break;
 		case ND_ADD:fprintf(stderr, "ADD\n");break;
 		case ND_LT:fprintf(stderr, "INF\n");break;
+		case ND_EXPR_STMT:fprintf(stderr, "EXPR_STMT\n");break;
 		default:fprintf(stderr, "Whaat about node %d ??\n", node->kind);break;
 	}
 	print_node(node->rhs, depth);
+}
+
+static void print_obj(Obj *obj, int depth) {
+	if (!obj)return;
+	fprintf(stderr, "Obj %s : %s %s\n", obj->name, obj->is_local ? "local" : "global", obj->is_function ? "function" : "var");
+	if (obj->is_function) {
+		print_node(obj->body, depth + 1);
+	}
+	print_obj(obj->next, depth);
 }
 
 static void print_nodes(Node **nodes) {
@@ -93,24 +99,24 @@ static Node *new_binary(NodeKind kind, Node *lhs, Node *rhs, Token *tok) {
 	Node *node = new_node(kind, tok);
 	node->lhs = lhs;
 	node->rhs = rhs;
-	if (do_print_ast)
-		print_node(node, 0);
+	// if (do_print_ast)
+	// 	print_node(node, 0);
 	return node;
 }
 
 static Node *new_unary(NodeKind kind, Node *expr, Token *tok) {
 	Node *node = new_node(kind, tok);
 	node->lhs = expr;
-	if (do_print_ast)
-		print_node(node, 0);
+	// if (do_print_ast)
+	// 	print_node(node, 0);
 	return node;
 }
 
 static Node *new_num(int val, Token *tok) {
 	Node *node = new_node(ND_NUM, tok);
 	node->val = val;
-	if (do_print_ast)
-		print_node(node, 0);
+	// if (do_print_ast)
+	// 	print_node(node, 0);
 	return node;
 }
 
@@ -509,7 +515,7 @@ Obj *parse(Token *tok) {
 		tok = global_variable(tok, basety);
 	}
 	if (do_print_ast) {
-		// print_obj(globals, 0);
+		print_obj(globals, 0);
 	}
 	return globals;
 }
