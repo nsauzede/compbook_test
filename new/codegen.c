@@ -5,7 +5,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "9cc.h"
+#include "chibicc.h"
 
 static Obj *current_fn;
 static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
@@ -93,6 +93,13 @@ static void gen_expr(Node *node) {
 		case ND_VAR:
 			gen_addr(node);
 			load(node->ty);
+			return;
+		case ND_DEREF:
+			gen_expr(node->lhs);
+			printf("  mov (%%rax), %%rax\n");
+			return;
+		case ND_ADDR:
+			gen_addr(node->lhs);
 			return;
 		case ND_ASSIGN:
 			gen_addr(node->lhs);

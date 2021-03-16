@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "9cc.h"
+#include "chibicc.h"
 #if 0
 static void gen(Node *node) {
 	if (!node) {

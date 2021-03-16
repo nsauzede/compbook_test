@@ -54,14 +54,14 @@ typedef enum {
 	ND_SUB,				// -
 	ND_MUL,				// *
 	ND_DIV,				// /
-	ND_NEG,
+	ND_NEG,				// unary -
 	ND_EQ,				// ==
 	ND_NE,				// !=
 	ND_LT,				// <
 	ND_LE,				// <=
 	ND_ASSIGN,			// =
-	ND_ADDR,
-	ND_DEREF,
+	ND_ADDR,			// unary &
+	ND_DEREF,			// unary *
 	ND_RETURN,
 	ND_IF,
 	ND_FOR,
@@ -83,7 +83,7 @@ struct LVar {
 struct Node {
 	NodeKind kind;
 	Token *tok;	// related token
-	Type *ty;
+	Type *ty;	// Type, eg: int  or pointer to int
 	Node *next;
 
 	Node *lhs;
@@ -131,6 +131,8 @@ struct Type {
 
 extern Type *ty_int;
 
+bool is_integer(Type *ty);
+Type *pointer_to(Type *base);
 Type *copy_type(Type *ty);
 Type *func_type(Type *return_ty);
 Type *array_of(Type *base, int size);

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "9cc.h"
+#include "chibicc.h"
 
 Token *token;
 
@@ -107,6 +107,7 @@ bool consume(Token **rest, Token *tok, char *str) {
 		return true;
 	}
 	*rest = tok;
+	return false;
 }
 
 // Create a new token and connect it to cur
