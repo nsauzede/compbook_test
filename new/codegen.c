@@ -216,11 +216,14 @@ static void assign_lvar_offsets(Obj *prog) {
 }
 
 static void emit_data(Obj *prog) {
+	printf("\t.data\n");
 	for (Obj *obj = prog; obj; obj = obj->next) {
 		if (obj->is_function) {
 			continue;
 		}
-		continue;
+		printf("\t.globl %s\n", obj->name);
+		printf("%s:\n", obj->name);
+		printf("\t.zero 8\n");
 	}
 }
 
@@ -229,8 +232,8 @@ static void emit_text(Obj *prog) {
 		if (!obj->is_function) {
 			continue;
 		}
-		printf(".globl %s\n", obj->name);
-		printf("\n");
+		printf("\t.globl %s\n", obj->name);
+		printf("\t.text\n");
 		printf("%s:\n", obj->name);
 		current_fn = obj;
 		// prologue

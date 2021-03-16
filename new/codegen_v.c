@@ -251,11 +251,23 @@ static void gen_stmt(Node *node) {
 }
 
 static void emit_data(Obj *prog) {
+	bool is_first = true;
 	for (Obj *obj = prog; obj; obj = obj->next) {
+		// printf("//obj %s function=%d local=%d\n", obj->name, (int)obj->is_function, (int)obj->is_local);
 		if (obj->is_function) {
 			continue;
 		}
-		fprintf(stderr, "//var %s local=%d\n", obj->name, (int)obj->is_local);
+		if (obj->is_local) {
+			continue;
+		}
+		if (is_first) {
+			printf("__global (\n");
+			is_first = false;
+		}
+		printf("cv_%s%d int\n", obj->name, obj->offset);
+	}
+	if (!is_first) {
+		printf(")\n");
 	}
 }
 
@@ -273,7 +285,9 @@ static void emit_text(Obj *prog) {
 		}
 		printf(") int {\n");
 		for (Obj *var = obj->locals; var; var = var->next) {
-			if (var->is_param)continue;
+			if (var->is_param) {
+				continue;
+			}
 			printf("\tmut cv_%s%d := 0//is_param=%d\n", var->name, var->offset, var->is_param);
 		}
 		gen_stmt(obj->body);
@@ -286,9 +300,9 @@ static void emit_text(Obj *prog) {
 // Assign offsets to local variables.
 static void assign_lvar_offsets(Obj *prog) {
   for (Obj *fn = prog; fn; fn = fn->next) {
-    if (!fn->is_function)
-      continue;
-    
+    if (!fn->is_function) {
+		continue;
+	}
     int offset = 0;
     for (Obj *var = fn->locals; var; var = var->next) {
 		var->offset = offset++;	// fake offset to make unique var names within a func

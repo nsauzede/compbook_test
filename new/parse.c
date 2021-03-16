@@ -85,6 +85,14 @@ static Obj *find_var(Token *tok) {
 			return var;
 		}
 	}
+	for (Obj *var = globals; var; var = var->next) {
+		if (var->is_function) {
+			continue;
+		}
+		if (strlen(var->name) == tok->len && !strncmp(tok->loc, var->name, tok->len)) {
+			return var;
+		}
+	}
 	return NULL;
 }
 
