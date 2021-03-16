@@ -3,7 +3,7 @@ assert() {
     expected="$1";input="$2"
     # aPRINT_TOKENS=1 GEN_V=1 gdb -q -nx -ex r --args ./9cc "$input"
     aPRINT_TOKENS=1 GEN_V=1 ./9cc "$input" > tmp.v && \
-    v -translated -o tmp tmp.v && ./tmp;actual="$?"
+    v -enable-globals -translated -o tmp tmp.v && ./tmp;actual="$?"
     if [ "$actual" = "$expected" ]; then
         echo "$input => $actual"
     else
@@ -11,10 +11,11 @@ assert() {
         exit 1
     fi
 }
+assert 42 'int g;int foo(){g = 6*7;return 0;}int main(){foo();return g;}'
 assert 42 'int foo(){return 42;}int main(){return foo();}'
 assert 21 'int fibonacci(int n){if (n<=1)return n;return fibonacci(n-1)+fibonacci(n-2);}int main(){return fibonacci(8);}'
 assert 1 'int main(){return 0<1;}'
-assert 6 'int main(){int j=0, i;for(i=0;i<=10;i=i+1){int j=j+1;i=i+1;}return j;}'
+assert 6 'int main(){int j=0, i;for(i=0;i<=10;i=i+1){j=j+1;i=i+1;}return j;}'
 assert 22 'int main(){int j=0,i;for(i=0;i<=10;i=i+1)j=j+2;return j;}'
 assert 22 'int main(){int j=0,i=0;while(i<11) {j=2*(i+1);i=i+1;}return j;}'
 assert 66 'int main(){if (1) return 66; else return 77;}';assert 77 'int main(){if (0) return 66; else return 77;}'
