@@ -2,8 +2,8 @@
 assert() {
     expected="$1";input="$2"
     echo "Testing input=[$input].."
-    ./9cc "$input" > tmp.s ; cc -o tmp tmp.s ; ./tmp;actual="$?"
-    # gdb -q -nx -ex r --args ./9cc "$input"
+    ./chibicc "$input" > tmp.s ; cc -o tmp tmp.s ; ./tmp;actual="$?"
+    # gdb -q -nx -ex r --args ./chibicc "$input"
     if [ "$actual" = "$expected" ]; then
         echo "$input => $actual"
     else
@@ -11,6 +11,20 @@ assert() {
         exit 1
     fi
 }
+assert 3 'int main() { int x=3; return *&x; }'
+assert 5 'int main() { int x=3; int y=5; return *(&x+1); }'
+
+# assert 3 'int main() { return ret3(); }'
+# assert 5 'int main() { return ret5(); }'
+# assert 8 'int main() { return add(3, 5); }'
+# assert 2 'int main() { return sub(5, 3); }'
+# assert 21 'int main() { return add6(1,2,3,4,5,6); }'
+# assert 66 'int main() { return add6(1,2,add6(3,4,5,6,7,8),9,10,11); }'
+# assert 136 'int main() { return add6(1,2,add6(3,add6(4,5,6,7,8,9),10,11,12,13),14,15,16); }'
+
+# assert 32 'int main() { return ret32(); } int ret32() { return 32; }'
+
+
 assert 42 'int g;int foo(){g = 6*7;return 0;}int main(){foo();return g;}'
 assert 42 'int foo(){return 42;}int main(){return foo();}'
 assert 21 'int fibonacci(int n){if (n<=1)return n;return fibonacci(n-1)+fibonacci(n-2);}int main(){return fibonacci(8);}'

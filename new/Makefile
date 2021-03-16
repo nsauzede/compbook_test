@@ -5,11 +5,11 @@ CFLAGS+=-O0
 #SRCS:=codegen.c main.c parse.c tokenize.c type.c
 OBJS:=$(SRCS:.c=.o)
 
-TARGET:=9cc
+TARGET:=chibicc
 
 all: $(TARGET)
 
-9cc: $(OBJS)
+chibicc: $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 test: $(TARGET)

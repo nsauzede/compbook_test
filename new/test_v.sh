@@ -1,8 +1,8 @@
 #!/bin/bash
 assert() {
     expected="$1";input="$2"
-    # aPRINT_TOKENS=1 GEN_V=1 gdb -q -nx -ex r --args ./9cc "$input"
-    aPRINT_TOKENS=1 GEN_V=1 ./9cc "$input" > tmp.v && \
+    # aPRINT_TOKENS=1 GEN_V=1 gdb -q -nx -ex r --args ./chibicc "$input"
+    aPRINT_TOKENS=1 GEN_V=1 ./chibicc "$input" > tmp.v && \
     v --enable-globals -translated -o tmp tmp.v && ./tmp;actual="$?"
     if [ "$actual" = "$expected" ]; then
         echo "$input => $actual"

@@ -1,5 +1,5 @@
 #include <malloc.h>
-#include "9cc.h"
+#include "chibicc.h"
 
 Type *ty_int = &(Type){TY_INT, 8};
 

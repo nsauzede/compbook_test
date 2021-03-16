@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "9cc.h"
+#include "chibicc.h"
 #define VERSION "0.step5"
 
 int main(int argc, char *argv[]) {

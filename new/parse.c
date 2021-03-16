@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "9cc.h"
+#include "chibicc.h"
 
 static int do_print_ast = 0;
 static Obj *globals;
@@ -23,7 +23,10 @@ static void print_node(Node *node, int depth) {
 	if (!node) {
 		return;
 	}
-	fprintf(stderr, "%*s%d", depth, "", depth);
+	if (!node->lhs) {
+		// fprintf(stderr, "%*s%d", depth, "", depth);
+		fprintf(stderr, "%*s", depth, "");
+	}
 	if (node->kind == ND_FUNCALL) {
 		LVar *lvar = (LVar *)node->lhs;
 		char buf[1000];
@@ -48,6 +51,8 @@ static void print_node(Node *node, int depth) {
 		case ND_VAR:fprintf(stderr, "LVAR\n");break;
 		case ND_NUM:fprintf(stderr, "NUM %d\n", node->val);break;
 		case ND_ASSIGN:fprintf(stderr, "ASSIGN\n");break;
+		case ND_ADDR:fprintf(stderr, "ADDR\n");break;
+		case ND_DEREF:fprintf(stderr, "DEREF\n");break;
 		case ND_ADD:fprintf(stderr, "ADD\n");break;
 		case ND_LT:fprintf(stderr, "INF\n");break;
 		case ND_EXPR_STMT:fprintf(stderr, "EXPR_STMT\n");break;
@@ -206,14 +211,16 @@ static Type *type_suffix(Token **rest, Token *tok, Type *ty) {
 }
 
 static Type *declarator(Token **rest, Token *tok, Type *ty) {
-//   while (consume(&tok, tok, "*"))
-//     ty = pointer_to(ty);
+	while (consume(&tok, tok, "*")) {
+		ty = pointer_to(ty);
+	}
 
-  if (tok->kind != TK_IDENT)
-    error_tok(tok, "expected a variable name");
-  ty = type_suffix(rest, tok->next, ty);
-  ty->name = tok;
-  return ty;
+	if (tok->kind != TK_IDENT) {
+		error_tok(tok, "expected a variable name");
+	}
+	ty = type_suffix(rest, tok->next, ty);
+	ty->name = tok;
+	return ty;
 }
 
 static Node *primary(Token **rest, Token *tok) {
@@ -270,6 +277,10 @@ static Node *unary(Token **rest, Token *tok) {
 		return unary(rest, tok->next);
 	} else if (equal(tok, "-")) {
 		return new_unary(ND_NEG, unary(rest, tok->next), tok);
+	} else if (equal(tok, "&")) {
+		return new_unary(ND_ADDR, unary(rest, tok->next), tok);
+	} else if (equal(tok, "*")) {
+		return new_unary(ND_DEREF, unary(rest, tok->next), tok);
 	}
 	return primary(rest, tok);
 }
@@ -289,14 +300,71 @@ static Node *mul(Token **rest, Token *tok) {
 	}
 }
 
+// In C, `+` operator is overloaded to perform the pointer arithmetic.
+// If p is a pointer, p+n adds not n but sizeof(*p)*n to the value of p,
+// so that p+n points to the location n elements (not bytes) ahead of p.
+// In other words, we need to scale an integer value before adding to a
+// pointer value. This function takes care of the scaling.
+static Node *new_add(Node *lhs, Node *rhs, Token *tok) {
+  add_type(lhs);
+  add_type(rhs);
+
+  // num + num
+  if (is_integer(lhs->ty) && is_integer(rhs->ty))
+    return new_binary(ND_ADD, lhs, rhs, tok);
+
+  // ptr + ptr (illegal)
+  if (lhs->ty->base && rhs->ty->base)
+    error_tok(tok, "invalid operands");
+
+  // Canonicalize `num + ptr` to `ptr + num`.
+  if (!lhs->ty->base && rhs->ty->base) {
+    Node *tmp = lhs;
+    lhs = rhs;
+    rhs = tmp;
+  }
+
+  // ptr + num
+  rhs = new_binary(ND_MUL, rhs, new_num(8, tok), tok);
+  return new_binary(ND_ADD, lhs, rhs, tok);
+}
+
+// Like `+`, `-` is overloaded for the pointer type.
+static Node *new_sub(Node *lhs, Node *rhs, Token *tok) {
+  add_type(lhs);
+  add_type(rhs);
+
+  // num - num
+  if (is_integer(lhs->ty) && is_integer(rhs->ty))
+    return new_binary(ND_SUB, lhs, rhs, tok);
+
+  // ptr - num
+  if (lhs->ty->base && is_integer(rhs->ty)) {
+    rhs = new_binary(ND_MUL, rhs, new_num(8, tok), tok);
+    add_type(rhs);
+    Node *node = new_binary(ND_SUB, lhs, rhs, tok);
+    node->ty = lhs->ty;
+    return node;
+  }
+
+  // ptr - ptr, which returns how many elements are between the two.
+  if (lhs->ty->base && rhs->ty->base) {
+    Node *node = new_binary(ND_SUB, lhs, rhs, tok);
+    node->ty = ty_int;
+    return new_binary(ND_DIV, node, new_num(8, tok), tok);
+  }
+
+  error_tok(tok, "invalid operands");
+}
+
 static Node *add(Token **rest, Token *tok) {
 	Node *node = mul(&tok, tok);
 	for (;;) {
 		Token *start = tok;
 		if (equal(tok, "+")) {
-			node = new_binary(ND_ADD, node, mul(&tok, tok->next), start);
+			node = new_add(node, mul(&tok, tok->next), start);
 		} else if (equal(tok, "-")) {
-			node = new_binary(ND_SUB, node, mul(&tok, tok->next), start);
+			node = new_sub(node, mul(&tok, tok->next), start);
 		} else {
 			*rest = tok;
 			return node;
