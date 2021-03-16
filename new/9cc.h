@@ -45,6 +45,8 @@ struct Obj {
 	Node *body;
 	Obj *locals;
 	int stack_size;
+	// for V
+	bool is_param;
 };
 
 typedef enum {
