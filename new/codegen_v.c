@@ -158,7 +158,7 @@ static void gen_expr(Node *node) {
 			printf("\n");
 			goto leave;
 		case ND_FUNCALL: {
-			printf("%s(", node->funcname);
+			printf("cf_%s(", node->funcname);
 			for (Node *arg = node->args; arg; arg = arg->next) {
 				gen_expr(arg);
 			}
@@ -264,13 +264,20 @@ static void emit_text(Obj *prog) {
 		if (!obj->is_function) {
 			continue;
 		}
-		printf("fn cf_%s() int {\n", obj->name);
+		printf("fn cf_%s(", obj->name);
+		for (Obj *param = obj->params; param; param = param->next) {
+			if (param != obj->params) {
+				printf(", ");
+			}
+			printf("cv_%s%d int", param->name, param->offset);
+		}
+		printf(") int {\n");
 		for (Obj *var = obj->locals; var; var = var->next) {
-			printf("\tmut cv_%s%d := 0\n", var->name, var->offset);
+			if (var->is_param)continue;
+			printf("\tmut cv_%s%d := 0//is_param=%d\n", var->name, var->offset, var->is_param);
 		}
 		gen_stmt(obj->body);
 		printf("}\n");
-		break;
 	}
 	printf("\n");
 	printf("exit(cf_main())\n");
@@ -285,6 +292,9 @@ static void assign_lvar_offsets(Obj *prog) {
     int offset = 0;
     for (Obj *var = fn->locals; var; var = var->next) {
 		var->offset = offset++;	// fake offset to make unique var names within a func
+    }
+    for (Obj *param = fn->params; param; param = param->next) {
+		param->is_param = true;
     }
   }
 }

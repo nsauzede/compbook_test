@@ -11,6 +11,8 @@ assert() {
         exit 1
     fi
 }
+assert 42 'int foo(){return 42;}int main(){return foo();}'
+assert 21 'int fibonacci(int n){if (n<=1)return n;return fibonacci(n-1)+fibonacci(n-2);}int main(){return fibonacci(8);}'
 assert 1 'int main(){return 0<1;}'
 assert 6 'int main(){int j=0, i;for(i=0;i<=10;i=i+1){j=j+1;i=i+1;}return j;}'
 assert 22 'int main(){int j=0,i;for(i=0;i<=10;i=i+1)j=j+2;return j;}'
