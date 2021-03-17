@@ -40,7 +40,6 @@ static void gen_expr(Node *node) {
 			gen_addr(node);
 			goto leave;
 		case ND_DEREF:
-			// printf("//missing deref epilog ?\n");
 			printf("*");
 			gen_expr(node->lhs);
 			return;
@@ -100,7 +99,7 @@ static void gen_expr(Node *node) {
 	}
 	gen_expr(node->rhs);
 	if (is_pointer_arith) {
-		printf("/8");	// must divide rhs by 8 because parser actually added scaling by 8
+		printf("/%d", node->lhs->ty->base->size);	// must divide rhs by xx because parser actually added scaling
 	}
 	leave:
 	if (node->paren) {
