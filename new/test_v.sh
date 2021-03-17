@@ -11,6 +11,14 @@ assert() {
         exit 1
     fi
 }
+
+assert 3 'int main() { int x=3; return *&x; }'
+assert 5 'int main() { int x=3; int y=5; return *(&x+1); }'
+
+assert 32 'int main() { return ret32(); } int ret32() { return 32; }'
+assert 7 'int main() { return add2(3,4); } int add2(int x, int y) { return x+y; }'
+assert 1 'int main() { return sub2(4,3); } int sub2(int x, int y) { return x-y; }'
+
 assert 42 'int g;int foo(){g = 6*7;return 0;}int main(){foo();return g;}'
 assert 42 'int foo(){return 42;}int main(){return foo();}'
 assert 21 'int fibonacci(int n){if (n<=1)return n;return fibonacci(n-1)+fibonacci(n-2);}int main(){return fibonacci(8);}'
@@ -33,3 +41,4 @@ assert 2 'int main(){int fee=2;return fee;}';assert 2 'int main(){int fee=2;int 
 assert 6 'int main(){int foo = 1;int bar = 2 + 3; return foo + bar;} // 6を返す'
 assert 18 'int main(){int Foo1 = 2;int Foo2 = 20; return Foo2 - Foo1;}'
 assert 9 'int main(){int foo = 2;int bar = 2 * 3;int baz = foo + bar;return 1+(baz);}'
+echo "OK"
