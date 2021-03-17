@@ -51,15 +51,6 @@ static void gen_addr(Node *node) {
   error_tok(node->tok, "not an lvalue");
 }
 
-static void gen_lval(Node *node) {
-	if (node->kind != ND_VAR) {
-		error("Left side value of assignment is not a variable");
-	}
-	printf("\tmov rax, rbp\n");
-	printf("\tsub rax, %d\n", node->var->offset * 8);
-	printf("\tpush rax\n");
-}
-
 // Load a value from where %rax is pointing to.
 static void load(Type *ty) {
   if (ty->kind == TY_ARRAY) {
