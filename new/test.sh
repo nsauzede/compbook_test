@@ -18,6 +18,11 @@ assert 32 'int main() { return ret32(); } int ret32() { return 32; }'
 assert 7 'int main() { return add2(3,4); } int add2(int x, int y) { return x+y; }'
 assert 1 'int main() { return sub2(4,3); } int sub2(int x, int y) { return x-y; }'
 
+assert 3 'int main() { int x[2]; int *y=&x; *y=3; return *x; }'
+assert 3 'int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return *x; }'
+assert 5 'int main() { int x[2][3]; int *y=x; y[5]=5; return x[1][2]; }'
+assert 8 'int main() { int x; return sizeof(x); }'
+
 # assert 3 'int main() { return ret3(); }'
 # assert 5 'int main() { return ret5(); }'
 # assert 8 'int main() { return add(3, 5); }'

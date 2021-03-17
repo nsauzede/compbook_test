@@ -87,7 +87,7 @@ static void gen_expr(Node *node) {
 			return;
 		case ND_DEREF:
 			gen_expr(node->lhs);
-			printf("  mov (%%rax), %%rax\n");
+			load(node->ty);
 			return;
 		case ND_ADDR:
 			gen_addr(node->lhs);
