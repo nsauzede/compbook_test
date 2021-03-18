@@ -2,7 +2,7 @@
 assert() {
     expected="$1";input="$2"
     echo "Testing input=[$input].."
-    ./chibicc "$input" > tmp.s ; cc -o tmp tmp.s ; ./tmp;actual="$?"
+    ./chibicc "$input" > tmp.s ; cc -static -o tmp tmp.s ; ./tmp;actual="$?"
     # gdb -q -nx -ex r --args ./chibicc "$input"
     if [ "$actual" = "$expected" ]; then
         echo "$input => $actual"
@@ -22,6 +22,13 @@ assert 3 'int main() { int x[2]; int *y=&x; *y=3; return *x; }'
 assert 3 'int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return *x; }'
 assert 5 'int main() { int x[2][3]; int *y=x; y[5]=5; return x[1][2]; }'
 assert 8 'int main() { int x; return sizeof(x); }'
+assert 0 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[0]; }'
+assert 1 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[1]; }'
+assert 2 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[2]; }'
+assert 3 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }'
+
+assert 8 'int x; int main() { return sizeof(x); }'
+assert 32 'int x[4]; int main() { return sizeof(x); }'
 
 # assert 3 'int main() { return ret3(); }'
 # assert 5 'int main() { return ret5(); }'
