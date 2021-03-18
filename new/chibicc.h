@@ -46,6 +46,7 @@ struct Obj {
 	Obj *locals;
 	int stack_size;
 	// for V
+	bool already_assigned;
 	bool is_param;
 };
 
@@ -106,6 +107,7 @@ struct Node {
 // For V codegen :
 	bool paren;		// false=>none, true=>this node is within '()'
 	bool boolean;	// expr is a boolean
+	// bool already_assigned;
 };
 
 Obj *parse(Token *tok);

@@ -13,10 +13,10 @@ static void gen_addr(Node *node) {
   case ND_VAR:
 	printf("cv_%s%d", node->var->name, node->var->offset);
     return;
-//   case ND_DEREF:
-//     gen_expr(node->lhs);
-// 	printf("cv_%s%d", node->var->name, node->var->offset);
-//     return;
+  case ND_DEREF:
+	printf("*");
+    gen_expr(node->lhs);
+    return;
   }
 
   error_tok(node->tok, "not an lvalue");
@@ -49,9 +49,14 @@ static void gen_expr(Node *node) {
 			return;
 		case ND_ASSIGN:
 			gen_addr(node->lhs);
-			printf(" = ");
+			if (!node->lhs->var->already_assigned) {
+				node->lhs->var->already_assigned = true;
+				printf(" := ");
+			} else {
+				printf(" = ");
+			}
 			gen_expr(node->rhs);
-			printf("\n");
+			printf("	//var=%p\n", node->lhs->var);
 			goto leave;
 		case ND_FUNCALL: {
 			printf("cf_%s(", node->funcname);
@@ -87,6 +92,9 @@ static void gen_expr(Node *node) {
 			break;
 		case ND_SUB:
 			printf("-");
+			if (node->lhs->ty->base) {
+				is_pointer_arith = true;
+			}
 			break;
 		case ND_MUL:
 			printf("*");
@@ -193,7 +201,7 @@ static void emit_text(Obj *prog) {
 			if (var->is_param) {
 				continue;
 			}
-			printf("\tmut cv_%s%d := 0//is_param=%d\n", var->name, var->offset, var->is_param);
+			// printf("\tmut cv_%s%d := 0//is_param=%d\n", var->name, var->offset, var->is_param);
 		}
 		gen_stmt(obj->body);
 		printf("}}\n");
