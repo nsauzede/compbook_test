@@ -46,7 +46,9 @@ static void print_node(Node *node, int depth) {
 			break;
 		}
 		case ND_RETURN:fprintf(stderr, "RETURN\n");break;
+		case ND_SUB:fprintf(stderr, "SUB\n");break;
 		case ND_MUL:fprintf(stderr, "MUL\n");break;
+		case ND_DIV:fprintf(stderr, "DIV\n");break;
 		case ND_IF:fprintf(stderr, "IF\n");break;
 		case ND_FOR:fprintf(stderr, "FOR\n");break;
 		case ND_EQ:fprintf(stderr, "EQ\n");break;
@@ -174,7 +176,9 @@ static int get_number(Token *tok) {
 }
 
 static Type *declspec(Token **rest, Token *tok) {
-	*rest = skip(tok, "int");
+	if (!consume(rest, tok, "long")) {
+		*rest = skip(tok, "int");
+	}
 	return ty_int;
 }
 
@@ -338,6 +342,7 @@ static Node *new_add(Node *lhs, Node *rhs, Token *tok) {
 
   // ptr + num
   rhs = new_binary(ND_MUL, rhs, new_num(lhs->ty->base->size, tok), tok);
+  rhs->pointer_arith = true;
   return new_binary(ND_ADD, lhs, rhs, tok);
 }
 
@@ -353,6 +358,7 @@ static Node *new_sub(Node *lhs, Node *rhs, Token *tok) {
   // ptr - num
   if (lhs->ty->base && is_integer(rhs->ty)) {
     rhs = new_binary(ND_MUL, rhs, new_num(lhs->ty->base->size, tok), tok);
+	rhs->pointer_arith = true;
     add_type(rhs);
     Node *node = new_binary(ND_SUB, lhs, rhs, tok);
     node->ty = lhs->ty;
@@ -363,7 +369,9 @@ static Node *new_sub(Node *lhs, Node *rhs, Token *tok) {
   if (lhs->ty->base && rhs->ty->base) {
     Node *node = new_binary(ND_SUB, lhs, rhs, tok);
     node->ty = ty_int;
-    return new_binary(ND_DIV, node, new_num(lhs->ty->base->size, tok), tok);
+	node = new_binary(ND_DIV, node, new_num(lhs->ty->base->size, tok), tok);
+	node->pointer_arith = true;
+    return node;
   }
 
   error_tok(tok, "invalid operands");
@@ -451,7 +459,7 @@ static Node *compound_stmt(Token **rest, Token *tok) {
   Node head = {};
   Node *cur = &head;
   while (!equal(tok, "}")) {
-    if (equal(tok, "int"))
+    if (equal(tok, "int") || equal(tok, "long"))
       cur = cur->next = declaration(&tok, tok);
     else
       cur = cur->next = stmt(&tok, tok);
