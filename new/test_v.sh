@@ -1,9 +1,20 @@
 #!/bin/bash
+cat <<EOF2 > tmp2.v
+fn cf_ret3() int { return 3 }
+fn cf_ret5() int { return 5 }
+fn cf_add(x int, y int) int { return x+y }
+fn cf_sub(x int, y int) int { return x-y }
+fn cf_add6(a int, b int, c int, d int, e int, f int) int {
+  return a+b+c+d+e+f
+}
+EOF2
 assert() {
     expected="$1";input="$2"
     # aPRINT_TOKENS=1 GEN_V=1 gdb -q -nx -ex r --args ./chibicc "$input"
-    aPRINT_TOKENS=1 GEN_V=1 ./chibicc "$input" > tmp.v && \
+    # aPRINT_TOKENS=1 GEN_V=1 ./chibicc "$input" > tmp.v && \
+    cat tmp2.v > tmp.v && aPRINT_TOKENS=1 GEN_V=1 ./chibicc "$input" >> tmp.v && \
     v -enable-globals -translated -o tmp tmp.v && ./tmp;actual="$?"
+    # v -enable-globals -translated -o tmp.c tmp.v && gcc -o tmp tmp.c tmp2.o && ./tmp;actual="$?"
     if [ "$actual" = "$expected" ]; then
         echo "$input => $actual"
     else
@@ -11,6 +22,8 @@ assert() {
         exit 1
     fi
 }
+
+#########
 
 assert 0 'int main() { return 0; }'
 assert 42 'int main() { return 42; }'
@@ -73,24 +86,29 @@ assert 10 'int main() { int i=0; while(i<10) i=i+1; return i; }'
 assert 55 'int main() { int i=0; int j=0; while(i<=10) {j=i+j; i=i+1;} return j; }'
 
 assert 3 'int main() { int x=3; return *&x; }'
-# assert 3 'int main() { int x=3; int *y=&x; int **z=&y; return **z; }'
+assert 3 'int main() { int x=3; int *y=&x; int **z=&y; return **z; }'
 # assert 5 'int main() { int x=3; int y=5; return *(&x+1); }'
+assert 5 'int main() { int x=3; int y=5; int z=7; if (&y > &z) return *(&z+1); else return *(&x+1); }'
 # assert 3 'int main() { int x=3; int y=5; return *(&y-1); }'
+assert 3 'int main() { int z=7; int x=3; int y=5; if (&y > &x) return *(&y-1); else return *(&z-1);}'
 # assert 5 'int main() { int x=3; int y=5; return *(&x-(-1)); }'
-#assert 5 'int main() { int x=3; int *y=&x; *y=5; return x; }'
-#assert 7 'int main() { int x=3; int y=5; *(&x+1)=7; return y; }'
-#assert 7 'int main() { int x=3; int y=5; *(&y-2+1)=7; return x; }'
-#assert 5 'int main() { int x=3; return (&x+2)-&x+3; }'
+assert 5 'int main() { int x=3; int y=5; int z = 7; if (&y > &x) return *(&x-(-1)); else return *(&z-(-1)); }'
+assert 5 'int main() { int x=3; int *y=&x; *y=5; return x; }'
+# assert 7 'int main() { int x=3; int y=5; *(&x+1)=7; return y; }'
+assert 7 'int main() { int x=3; int y=5; int z=9; if (&y > &x) *(&x+1)=7; else *(&z+1)=7; return y; }'
+# assert 7 'int main() { int x=3; int y=5; *(&y-2+1)=7; return x; }'
+assert 7 'int main() { int z=9; int x=3; int y=5; if (&z > &x) *(&z-2+1)=7; else *(&y-2+1)=7; return x; }'
+assert 5 'int main() { int x=3; return (&x+2)-&x+3; }'
 assert 8 'int main() { int x, y; x=3; y=5; return x+y; }'
 assert 8 'int main() { int x=3, y=5; return x+y; }'
 
-#assert 3 'int main() { return ret3(); }'
-#assert 5 'int main() { return ret5(); }'
-#assert 8 'int main() { return add(3, 5); }'
-#assert 2 'int main() { return sub(5, 3); }'
-#assert 21 'int main() { return add6(1,2,3,4,5,6); }'
-#assert 66 'int main() { return add6(1,2,add6(3,4,5,6,7,8),9,10,11); }'
-#assert 136 'int main() { return add6(1,2,add6(3,add6(4,5,6,7,8,9),10,11,12,13),14,15,16); }'
+assert 3 'int main() { return ret3(); }'
+assert 5 'int main() { return ret5(); }'
+assert 8 'int main() { return add(3, 5); }'
+assert 2 'int main() { return sub(5, 3); }'
+assert 21 'int main() { return add6(1,2,3,4,5,6); }'
+assert 66 'int main() { return add6(1,2,add6(3,4,5,6,7,8),9,10,11); }'
+assert 136 'int main() { return add6(1,2,add6(3,add6(4,5,6,7,8,9),10,11,12,13),14,15,16); }'
 
 assert 32 'int main() { return ret32(); } int ret32() { return 32; }'
 assert 7 'int main() { return add2(3,4); } int add2(int x, int y) { return x+y; }'
@@ -123,17 +141,17 @@ assert 55 'int main() { return fib(9); } int fib(int x) { if (x<=1) return 1; re
 #assert 4 'int main() { int x[2][3]; int *y=x; y[4]=4; return x[1][1]; }'
 #assert 5 'int main() { int x[2][3]; int *y=x; y[5]=5; return x[1][2]; }'
 
-assert 8 'int main() { int x; return sizeof(x); }'
-assert 8 'int main() { int x; return sizeof x; }'
+assert 8 'int main() { long x; return sizeof(x); }'
+assert 8 'int main() { long x; return sizeof x; }'
 assert 8 'int main() { int *x; return sizeof(x); }'
-assert 32 'int main() { int x[4]; return sizeof(x); }'
-assert 96 'int main() { int x[3][4]; return sizeof(x); }'
-assert 32 'int main() { int x[3][4]; return sizeof(*x); }'
-assert 8 'int main() { int x[3][4]; return sizeof(**x); }'
-assert 9 'int main() { int x[3][4]; return sizeof(**x) + 1; }'
-assert 9 'int main() { int x[3][4]; return sizeof **x + 1; }'
-assert 8 'int main() { int x[3][4]; return sizeof(**x + 1); }'
-assert 8 'int main() { int x=1; return sizeof(x=2); }'
+assert 32 'int main() { long x[4]; return sizeof(x); }'
+assert 96 'int main() { long x[3][4]; return sizeof(x); }'
+assert 32 'int main() { long x[3][4]; return sizeof(*x); }'
+assert 8 'int main() { long x[3][4]; return sizeof(**x); }'
+assert 9 'int main() { long x[3][4]; return sizeof(**x) + 1; }'
+assert 9 'int main() { long x[3][4]; return sizeof **x + 1; }'
+assert 8 'int main() { long x[3][4]; return sizeof(**x + 1); }'
+assert 8 'int main() { long x=1; return sizeof(x=2); }'
 assert 1 'int main() { int x=1; sizeof(x=2); return x; }'
 
 assert 0 'int x; int main() { return x; }'
@@ -145,9 +163,8 @@ assert 7 'int x, y; int main() { x=3; y=4; return x+y; }'
 #assert 2 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[2]; }'
 #assert 3 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }'
 
-assert 8 'int x; int main() { return sizeof(x); }'
-assert 32 'int x[4]; int main() { return sizeof(x); }'
-
+assert 8 'long x; int main() { return sizeof(x); }'
+assert 32 'long x[4]; int main() { return sizeof(x); }'
 echo OK
 exit 0
 

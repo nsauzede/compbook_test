@@ -14,7 +14,7 @@ static void gen_addr(Node *node) {
 	printf("cv_%s%d", node->var->name, node->var->offset);
     return;
   case ND_DEREF:
-	printf("*");
+	// printf("*/*gen_addr*/");
     gen_expr(node->lhs);
     return;
   }
@@ -40,16 +40,23 @@ static void gen_expr(Node *node) {
 			gen_addr(node);
 			goto leave;
 		case ND_DEREF:
-			printf("*");
+			printf("*/*gen_expr*/");
 			gen_expr(node->lhs);
 			return;
 		case ND_ADDR:
 			printf("&");
 			gen_expr(node->lhs);
 			return;
-		case ND_ASSIGN:
+		case ND_ASSIGN: {
+			static int count = 0;
+			if (!node->lhs->var) {
+				printf("cvtmp%d := ", count);
+			}
 			gen_addr(node->lhs);
-			if (!node->lhs->var->already_assigned) {
+			if (!node->lhs->var) {
+				printf("\t//temporary because lvalue not a var\n*cvtmp%d", count++);
+			}
+			if (node->lhs->var && !node->lhs->var->already_assigned) {
 				node->lhs->var->already_assigned = true;
 				printf(" := ");
 			} else {
@@ -58,6 +65,7 @@ static void gen_expr(Node *node) {
 			gen_expr(node->rhs);
 			printf("	//var=%p\n", node->lhs->var);
 			goto leave;
+		}
 		case ND_FUNCALL: {
 			printf("cf_%s(", node->funcname);
 			for (Node *arg = node->args; arg; arg = arg->next) {
@@ -86,29 +94,26 @@ static void gen_expr(Node *node) {
 			break;
 		case ND_ADD:
 			printf("+");
-			if (node->lhs->ty->base) {
-				is_pointer_arith = true;
-			}
 			break;
 		case ND_SUB:
 			printf("-");
-			if (node->lhs->ty->base) {
-				is_pointer_arith = true;
-			}
 			break;
 		case ND_MUL:
+			if (node->pointer_arith) {
+				goto leave;
+			}
 			printf("*");
 			break;
 		case ND_DIV:
+			if (node->pointer_arith) {
+				goto leave;
+			}
 			printf("/");
 			break;
 		default:
 			error("%s: Unknown node type %d\n", __func__, node->kind);
 	}
 	gen_expr(node->rhs);
-	if (is_pointer_arith) {
-		printf("/%d", node->lhs->ty->base->size);	// must divide rhs by xx because parser actually added scaling
-	}
 	leave:
 	if (node->paren) {
 		printf(")");

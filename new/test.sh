@@ -12,15 +12,37 @@ EOF
 assert() {
     expected="$1";input="$2"
     echo "Testing input=[$input].."
-    ./chibicc "$input" > tmp.s ; cc -static -o tmp tmp.s tmp2.o ; ./tmp;actual="$?"
+    echo "$input" > tmp.c.txt
+    #cc -static -o tmp tmp.s tmp2.o
+    
+    gcc -x c -o tmp.o tmp.c.txt -c ; gcc -static -o tmp tmp.o tmp2.o ; ./tmp ; actual="$?"
+    if [ "$actual" = "$expected" ]; then
+        echo "GCC $input => $actual"
+    else
+        echo "GCC $input => [$expected] expected, but got [$actual]"
+        exit 1
+    fi
+
+    tcc -x c -o tmp tmp.c.txt ; ./tmp ; actual="$?"
+    if [ "$actual" = "$expected" ]; then
+        echo "TCC $input => $actual"
+    else
+        echo "TCC $input => [$expected] expected, but got [$actual]"
+        exit 1
+    fi
+
+    ./chibicc "$input" > tmp.s ; ./tmp;actual="$?"
     # gdb -q -nx -ex r --args ./chibicc "$input"
     if [ "$actual" = "$expected" ]; then
-        echo "$input => $actual"
+        echo "CHI $input => $actual"
     else
-        echo "$input => [$expected] expected, but got [$actual]"
+        echo "CHI $input => [$expected] expected, but got [$actual]"
         exit 1
     fi
 }
+
+
+#################
 
 assert 0 'int main() { return 0; }'
 assert 42 'int main() { return 42; }'
@@ -84,12 +106,17 @@ assert 55 'int main() { int i=0; int j=0; while(i<=10) {j=i+j; i=i+1;} return j;
 
 assert 3 'int main() { int x=3; return *&x; }'
 assert 3 'int main() { int x=3; int *y=&x; int **z=&y; return **z; }'
-assert 5 'int main() { int x=3; int y=5; return *(&x+1); }'
-assert 3 'int main() { int x=3; int y=5; return *(&y-1); }'
-assert 5 'int main() { int x=3; int y=5; return *(&x-(-1)); }'
+# assert 5 'int main() { int x=3; int y=5; return *(&x+1); }'
+assert 5 'int main() { int x=3; int y=5; int z=7; if (&y > &z) return *(&z+1); else return *(&x+1); }'
+# assert 3 'int main() { int x=3; int y=5; return *(&y-1); }'
+assert 3 'int main() { int z=7; int x=3; int y=5; if (&y > &x) return *(&y-1); else return *(&z-1);}'
+# assert 5 'int main() { int x=3; int y=5; return *(&x-(-1)); }'
+assert 5 'int main() { int x=3; int y=5; int z = 7; if (&y > &x) return *(&x-(-1)); else return *(&z-(-1)); }'
 assert 5 'int main() { int x=3; int *y=&x; *y=5; return x; }'
-assert 7 'int main() { int x=3; int y=5; *(&x+1)=7; return y; }'
-assert 7 'int main() { int x=3; int y=5; *(&y-2+1)=7; return x; }'
+# assert 7 'int main() { int x=3; int y=5; *(&x+1)=7; return y; }'
+assert 7 'int main() { int x=3; int y=5; int z=9; if (&y > &x) *(&x+1)=7; else *(&z+1)=7; return y; }'
+# assert 7 'int main() { int x=3; int y=5; *(&y-2+1)=7; return x; }'
+assert 7 'int main() { int z=9; int x=3; int y=5; if (&z > &x) *(&z-2+1)=7; else *(&y-2+1)=7; return x; }'
 assert 5 'int main() { int x=3; return (&x+2)-&x+3; }'
 assert 8 'int main() { int x, y; x=3; y=5; return x+y; }'
 assert 8 'int main() { int x=3, y=5; return x+y; }'
@@ -133,17 +160,17 @@ assert 3 'int main() { int x[2][3]; int *y=x; y[3]=3; return x[1][0]; }'
 assert 4 'int main() { int x[2][3]; int *y=x; y[4]=4; return x[1][1]; }'
 assert 5 'int main() { int x[2][3]; int *y=x; y[5]=5; return x[1][2]; }'
 
-assert 8 'int main() { int x; return sizeof(x); }'
-assert 8 'int main() { int x; return sizeof x; }'
+assert 8 'int main() { long x; return sizeof(x); }'
+assert 8 'int main() { long x; return sizeof x; }'
 assert 8 'int main() { int *x; return sizeof(x); }'
-assert 32 'int main() { int x[4]; return sizeof(x); }'
-assert 96 'int main() { int x[3][4]; return sizeof(x); }'
-assert 32 'int main() { int x[3][4]; return sizeof(*x); }'
-assert 8 'int main() { int x[3][4]; return sizeof(**x); }'
-assert 9 'int main() { int x[3][4]; return sizeof(**x) + 1; }'
-assert 9 'int main() { int x[3][4]; return sizeof **x + 1; }'
-assert 8 'int main() { int x[3][4]; return sizeof(**x + 1); }'
-assert 8 'int main() { int x=1; return sizeof(x=2); }'
+assert 32 'int main() { long x[4]; return sizeof(x); }'
+assert 96 'int main() { long x[3][4]; return sizeof(x); }'
+assert 32 'int main() { long x[3][4]; return sizeof(*x); }'
+assert 8 'int main() { long x[3][4]; return sizeof(**x); }'
+assert 9 'int main() { long x[3][4]; return sizeof(**x) + 1; }'
+assert 9 'int main() { long x[3][4]; return sizeof **x + 1; }'
+assert 8 'int main() { long x[3][4]; return sizeof(**x + 1); }'
+assert 8 'int main() { long x=1; return sizeof(x=2); }'
 assert 1 'int main() { int x=1; sizeof(x=2); return x; }'
 
 assert 0 'int x; int main() { return x; }'
@@ -155,7 +182,6 @@ assert 1 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[1]; }'
 assert 2 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[2]; }'
 assert 3 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }'
 
-assert 8 'int x; int main() { return sizeof(x); }'
-assert 32 'int x[4]; int main() { return sizeof(x); }'
-
+assert 8 'long x; int main() { return sizeof(x); }'
+assert 32 'long x[4]; int main() { return sizeof(x); }'
 echo OK

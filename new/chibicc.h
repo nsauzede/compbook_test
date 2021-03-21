@@ -107,7 +107,7 @@ struct Node {
 // For V codegen :
 	bool paren;		// false=>none, true=>this node is within '()'
 	bool boolean;	// expr is a boolean
-	// bool already_assigned;
+	bool pointer_arith;
 };
 
 Obj *parse(Token *tok);
