@@ -23,6 +23,11 @@ assert() {
     fi
 }
 
+assert 7 'int main() { int x=3; int y=5; int z=9; if (&y > &x) *(&x+1)=7; else *(&z+1)=7; return y; }'
+PRINT_AST=1 assert 3 'int main() { int x[2]; int *y=&x; *y=3; return *x; }'
+assert 0 'int main() { int x[2][3]; int *y=x; *y=0; return **x; }'
+#assert 3 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x; } '
+#PRINT_AST=1 assert 3 'int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return *x; }'
 #########
 
 assert 0 'int main() { return 0; }'
@@ -85,14 +90,14 @@ assert 5 'int main() { ;;; return 5; }'
 assert 10 'int main() { int i=0; while(i<10) i=i+1; return i; }'
 assert 55 'int main() { int i=0; int j=0; while(i<=10) {j=i+j; i=i+1;} return j; }'
 
-assert 3 'int main() { int x=3; return *&x; }'
-assert 3 'int main() { int x=3; int *y=&x; int **z=&y; return **z; }'
+#assert 3 'int main() { int x=3; return *&x; }'
+#assert 3 'int main() { int x=3; int *y=&x; int **z=&y; return **z; }'
 # assert 5 'int main() { int x=3; int y=5; return *(&x+1); }'
-assert 5 'int main() { int x=3; int y=5; int z=7; if (&y > &z) return *(&z+1); else return *(&x+1); }'
+#assert 5 'int main() { int x=3; int y=5; int z=7; if (&y > &z) return *(&z+1); else return *(&x+1); }'
 # assert 3 'int main() { int x=3; int y=5; return *(&y-1); }'
-assert 3 'int main() { int z=7; int x=3; int y=5; if (&y > &x) return *(&y-1); else return *(&z-1);}'
+#assert 3 'int main() { int z=7; int x=3; int y=5; if (&y > &x) return *(&y-1); else return *(&z-1);}'
 # assert 5 'int main() { int x=3; int y=5; return *(&x-(-1)); }'
-assert 5 'int main() { int x=3; int y=5; int z = 7; if (&y > &x) return *(&x-(-1)); else return *(&z-(-1)); }'
+#assert 5 'int main() { int x=3; int y=5; int z = 7; if (&y > &x) return *(&x-(-1)); else return *(&z-(-1)); }'
 assert 5 'int main() { int x=3; int *y=&x; *y=5; return x; }'
 # assert 7 'int main() { int x=3; int y=5; *(&x+1)=7; return y; }'
 assert 7 'int main() { int x=3; int y=5; int z=9; if (&y > &x) *(&x+1)=7; else *(&z+1)=7; return y; }'
@@ -115,22 +120,22 @@ assert 7 'int main() { return add2(3,4); } int add2(int x, int y) { return x+y; 
 assert 1 'int main() { return sub2(4,3); } int sub2(int x, int y) { return x-y; }'
 assert 55 'int main() { return fib(9); } int fib(int x) { if (x<=1) return 1; return fib(x-1) + fib(x-2); }'
 
-#assert 3 'int main() { int x[2]; int *y=&x; *y=3; return *x; }'
+assert 3 'int main() { int x[2]; int *y=&x; *y=3; return *x; }'
 
 #assert 3 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x; }'
-#assert 4 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *(x+1); }'
-#assert 5 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *(x+2); }'
+assert 4 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *(x+1); }'
+assert 5 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *(x+2); }'
 
-#assert 0 'int main() { int x[2][3]; int *y=x; *y=0; return **x; }'
-#assert 1 'int main() { int x[2][3]; int *y=x; *(y+1)=1; return *(*x+1); }'
-#assert 2 'int main() { int x[2][3]; int *y=x; *(y+2)=2; return *(*x+2); }'
+assert 0 'int main() { int x[2][3]; int *y=x; *y=0; return **x; }'
+assert 1 'int main() { int x[2][3]; int *y=x; *(y+1)=1; return *(*x+1); }'
+assert 2 'int main() { int x[2][3]; int *y=x; *(y+2)=2; return *(*x+2); }'
 #assert 3 'int main() { int x[2][3]; int *y=x; *(y+3)=3; return **(x+1); }'
 #assert 4 'int main() { int x[2][3]; int *y=x; *(y+4)=4; return *(*(x+1)+1); }'
 #assert 5 'int main() { int x[2][3]; int *y=x; *(y+5)=5; return *(*(x+1)+2); }'
 
 #assert 3 'int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return *x; }'
-#assert 4 'int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return *(x+1); }'
-#assert 5 'int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return *(x+2); }'
+assert 4 'int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return *(x+1); }'
+assert 5 'int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return *(x+2); }'
 #assert 5 'int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return *(x+2); }'
 #assert 5 'int main() { int x[3]; *x=3; x[1]=4; 2[x]=5; return *(x+2); }'
 
