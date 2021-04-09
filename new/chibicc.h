@@ -51,26 +51,26 @@ struct Obj {
 };
 
 typedef enum {
-	ND_ADD,				// +
-	ND_SUB,				// -
-	ND_MUL,				// *
-	ND_DIV,				// /
-	ND_NEG,				// unary -
-	ND_EQ,				// ==
-	ND_NE,				// !=
-	ND_LT,				// <
-	ND_LE,				// <=
-	ND_ASSIGN,			// =
-	ND_ADDR,			// unary &
-	ND_DEREF,			// unary *
-	ND_RETURN,
-	ND_IF,
-	ND_FOR,
-	ND_BLOCK,
-	ND_FUNCALL,
-	ND_EXPR_STMT,
-	ND_VAR,
-	ND_NUM,				// integer
+	ND_ADD,			// 0	+
+	ND_SUB,			// 1	-
+	ND_MUL,			// 2	*
+	ND_DIV,			// 3	/
+	ND_NEG,			// 4	unary -
+	ND_EQ,			// 5	==
+	ND_NE,			// 6	!=
+	ND_LT,			// 7	<
+	ND_LE,			// 8	<=
+	ND_ASSIGN,		// 9	=
+	ND_ADDR,		// 10	unary &
+	ND_DEREF,		// 11	unary *
+	ND_RETURN,		// 12
+	ND_IF,			// 13
+	ND_FOR,			// 14
+	ND_BLOCK,		// 15
+	ND_FUNCALL,		// 16
+	ND_EXPR_STMT,	// 17
+	ND_VAR,			// 18
+	ND_NUM,			// 19	integer/long
 } NodeKind;
 
 typedef struct LVar LVar;

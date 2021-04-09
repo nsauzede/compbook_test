@@ -14,8 +14,45 @@ static void gen_addr(Node *node) {
 	printf("cv_%s%d", node->var->name, node->var->offset);
     return;
   case ND_DEREF:
-	// printf("*/*gen_addr*/");
+#if 1
+	printf("/*gen_addr node=%d:%s",
+		node->kind,
+		node->ty->kind == TY_ARRAY?"arr":
+		node->ty->kind == TY_FUNC?"fun":
+		node->ty->kind == TY_INT?"int":
+		node->ty->kind == TY_PTR?"ptr":
+		"???"
+	);
+	if (node->lhs)
+	printf(" lhs=%d:%s",
+		node->lhs->kind,
+		node->lhs->ty->kind == TY_ARRAY?"arr":
+		node->lhs->ty->kind == TY_FUNC?"fun":
+		node->lhs->ty->kind == TY_INT?"int":
+		node->lhs->ty->kind == TY_PTR?"ptr":
+		"???"
+	);
+	if (node->rhs)
+	printf(" rhs=%d:%s",
+		node->rhs->kind,
+		node->rhs->ty->kind == TY_ARRAY?"arr":
+		node->rhs->ty->kind == TY_FUNC?"fun":
+		node->rhs->ty->kind == TY_INT?"int":
+		node->rhs->ty->kind == TY_PTR?"ptr":
+		"???"
+	);
+	printf("*/");
+#endif
+	if (node->var) {
+		printf("*");
+	} else if (/*node->lhs->kind == ND_VAR &&*/ node->lhs->ty->kind == TY_ARRAY) {
+	 	// printf("&");
+	} else {
+	}
     gen_expr(node->lhs);
+	if (node->ty->kind == TY_ARRAY) {
+		// printf("[0]");
+	}
     return;
   }
 
@@ -40,29 +77,102 @@ static void gen_expr(Node *node) {
 			gen_addr(node);
 			goto leave;
 		case ND_DEREF:
-			printf("*/*gen_expr*/");
+#if 0
+			printf("/*gen_expr node=%d:%s",
+				node->kind,
+				node->ty->kind == TY_ARRAY?"arr":
+				node->ty->kind == TY_FUNC?"fun":
+				node->ty->kind == TY_INT?"int":
+				node->ty->kind == TY_PTR?"ptr":
+				"???"
+			);
+			if (node->lhs)
+			printf(" lhs=%d:%s",
+				node->lhs->kind,
+				node->lhs->ty->kind == TY_ARRAY?"arr":
+				node->lhs->ty->kind == TY_FUNC?"fun":
+				node->lhs->ty->kind == TY_INT?"int":
+				node->lhs->ty->kind == TY_PTR?"ptr":
+				"???"
+			);
+			if (node->rhs)
+			printf(" rhs=%d:%s",
+				node->rhs->kind,
+				node->rhs->ty->kind == TY_ARRAY?"arr":
+				node->rhs->ty->kind == TY_FUNC?"fun":
+				node->rhs->ty->kind == TY_INT?"int":
+				node->rhs->ty->kind == TY_PTR?"ptr":
+				"???"
+			);
+			printf("*/*");
+#endif
+			if (node->lhs->ty->kind == TY_ARRAY) {
+				// printf("&");
+			}
 			gen_expr(node->lhs);
+			if (node->lhs->ty->kind == TY_ARRAY) {
+				printf("[0]");
+			}
 			return;
 		case ND_ADDR:
-			printf("&");
+			printf("&/*gen_expr*/");
 			gen_expr(node->lhs);
+			if (node->lhs->ty->kind == TY_ARRAY) {
+				printf("[0]/*gen_expr*/");
+			}
 			return;
 		case ND_ASSIGN: {
 			static int count = 0;
-			if (!node->lhs->var) {
+			bool use_temp = false;
+#if 0
+			printf("/*node=%d:%s lhs=%d:%s rhs=%d:%s*/",
+				node->kind,
+				node->ty->kind == TY_ARRAY?"arr":
+				node->ty->kind == TY_FUNC?"fun":
+				node->ty->kind == TY_INT?"int":
+				node->ty->kind == TY_PTR?"ptr":
+				"???",
+				node->lhs->kind,
+				node->lhs->ty->kind == TY_ARRAY?"arr":
+				node->lhs->ty->kind == TY_FUNC?"fun":
+				node->lhs->ty->kind == TY_INT?"int":
+				node->lhs->ty->kind == TY_PTR?"ptr":
+				"???",
+				node->rhs->kind,
+				node->rhs->ty->kind == TY_ARRAY?"arr":
+				node->rhs->ty->kind == TY_FUNC?"fun":
+				node->rhs->ty->kind == TY_INT?"int":
+				node->rhs->ty->kind == TY_PTR?"ptr":
+				"???"
+			);
+#endif
+			if (!node->lhs->var /*&& node->lhs->kind != ND_DEREF*/) {
+				use_temp = true;
+			}
+			if (use_temp) {
 				printf("cvtmp%d := ", count);
 			}
 			gen_addr(node->lhs);
-			if (!node->lhs->var) {
+			if (use_temp) {
 				printf("\t//temporary because lvalue not a var\n*cvtmp%d", count++);
 			}
-			if (node->lhs->var && !node->lhs->var->already_assigned) {
+			if (!use_temp && node->lhs->var && !node->lhs->var->already_assigned) {
 				node->lhs->var->already_assigned = true;
 				printf(" := ");
 			} else {
 				printf(" = ");
 			}
+			if (node->lhs->ty->kind == TY_PTR && node->rhs->ty->kind == TY_ARRAY) {
+				printf("&/*gen_expr*/");
+			}
 			gen_expr(node->rhs);
+			if (node->lhs->ty->kind == TY_PTR && node->rhs->ty->kind == TY_ARRAY) {
+				Type *ty = node->rhs->ty;
+				do {
+					printf("[0]");
+					ty = ty->base;
+				} while (ty && ty->kind == TY_ARRAY);
+			}
 			printf("	//var=%p\n", node->lhs->var);
 			goto leave;
 		}
@@ -77,6 +187,11 @@ static void gen_expr(Node *node) {
 			printf(")");
 			goto leave;
 		}
+		case ND_ADD:
+			if (node->lhs->ty->kind == TY_ARRAY) {
+				printf("/*add*/&");
+			}
+			break;
 	}
 	gen_expr(node->lhs);
 	switch (node->kind) {
@@ -93,6 +208,9 @@ static void gen_expr(Node *node) {
 			printf("<=");
 			break;
 		case ND_ADD:
+			if (node->lhs->ty->kind == TY_ARRAY) {
+				printf("/*add*/[0]");
+			}
 			printf("+");
 			break;
 		case ND_SUB:
@@ -191,6 +309,7 @@ static void emit_data(Obj *prog) {
 
 static void emit_text(Obj *prog) {
 	for (Obj *obj = prog; obj; obj = obj->next) {
+		// printf("/*name=%s func=%d loc=%d par=%d arr=%d*/\n", obj->name, obj->is_function, obj->is_local, obj->is_param, obj->ty->kind == TY_ARRAY);
 		if (!obj->is_function) {
 			continue;
 		}
@@ -207,6 +326,20 @@ static void emit_text(Obj *prog) {
 				continue;
 			}
 			// printf("\tmut cv_%s%d := 0//is_param=%d\n", var->name, var->offset, var->is_param);
+			printf("/*name=%s func=%d loc=%d par=%d arr=%d size=%d*/\n", var->name, var->is_function, var->is_local, var->is_param, var->ty->kind == TY_ARRAY, var->ty->size);
+			if (var->ty->kind == TY_ARRAY) {
+				// if (var->ty->base->kind == TY_ARRAY) {
+				// 	fprintf(stderr, "array of array ?\n");
+				// 	exit(1);
+				// }
+				printf("mut cv_%s%d := ", var->name, var->offset);
+				Type *ty = var->ty;
+				do {
+					printf("[%d]", ty->array_len);
+					ty = ty->base;
+				} while (ty && ty->kind == TY_ARRAY);
+				printf("int{}\n");
+			}
 		}
 		gen_stmt(obj->body);
 		printf("}}\n");
@@ -223,6 +356,7 @@ static void assign_lvar_offsets(Obj *prog) {
 	}
     int offset = 0;
     for (Obj *var = fn->locals; var; var = var->next) {
+		// printf("/*local var %s ofs %d is_array=%d*/\n", var->name, var->offset, var->ty->kind == TY_ARRAY);
 		var->offset = offset++;	// fake offset to make unique var names within a func
     }
     for (Obj *param = fn->params; param; param = param->next) {
