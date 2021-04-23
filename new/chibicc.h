@@ -140,6 +140,6 @@ Type *func_type(Type *return_ty);
 Type *array_of(Type *base, int size);
 void add_type(Node *node);
 
-void codegen(Obj *prog);
+void codegen(Obj *prog, char *input);
 
 #endif/*__9CC_H__*/

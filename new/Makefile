@@ -13,8 +13,8 @@ chibicc: $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 test: $(TARGET)
-	./test.sh
 	./test_v.sh
+	./test.sh
 
 check: $(TARGET)
 	./$(TARGET) 'int main(){return 123;}' > tmp.s
