@@ -15,6 +15,6 @@ int main(int argc, char *argv[]) {
 	}
 	Token *tok = tokenize(argv[1]);
 	Obj *obj = parse(tok);
-	codegen(obj);
+	codegen(obj, argv[1]);
 	return 0;
 }

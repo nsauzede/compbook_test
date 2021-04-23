@@ -23,11 +23,16 @@ assert() {
     fi
 }
 
-assert 7 'int main() { int x=3; int y=5; int z=9; if (&y > &x) *(&x+1)=7; else *(&z+1)=7; return y; }'
-PRINT_AST=1 assert 3 'int main() { int x[2]; int *y=&x; *y=3; return *x; }'
-assert 0 'int main() { int x[2][3]; int *y=x; *y=0; return **x; }'
-assert 3 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x; } '
-PRINT_AST=1 assert 3 'int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return *x; }'
+assert 5 'int main() { int x=3; int *y=&x; *y=5; return x; }'
+
+# assert 3 'int main() { int x=3; return &x; }'
+assert 3 'int main() { int x=3; return *&x; }'
+
+PRINT_AST=1 assert 3 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x; } '
+# assert 7 'int main() { int x=3; int y=5; int z=9; if (&y > &x) *(&x+1)=7; else *(&z+1)=7; return y; }'
+# PRINT_AST=1 assert 3 'int main() { int x[2]; int *y=&x; *y=3; return *x; }'
+# assert 0 'int main() { int x[2][3]; int *y=x; *y=0; return **x; }'
+# PRINT_AST=1 assert 3 'int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return *x; }'
 #########
 
 assert 0 'int main() { return 0; }'

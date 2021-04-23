@@ -600,8 +600,8 @@ Obj *parse(Token *tok) {
 	if (env) {
 		sscanf(env, "%d", &do_print_ast);
 	}
-	if (do_print_ast)
-		fprintf(stderr, "Will print AST..\n");
+	// if (do_print_ast)
+	// 	fprintf(stderr, "Will print AST..\n");
 	while (tok->kind != TK_EOF) {
 		Type *basety = declspec(&tok, tok);
 		if (is_function(tok)) {

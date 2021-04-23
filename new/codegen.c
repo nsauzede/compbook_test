@@ -254,15 +254,15 @@ static void emit_text(Obj *prog) {
 	}
 }
 
-void codegen(Obj *prog) {
+void codegen(Obj *prog, char *input) {
 	int gen_v = 0;
 	char *env = getenv("GEN_V");
 	if (env) {
 		sscanf(env, "%d", &gen_v);
 	}
 	if (gen_v) {
-		extern void codegen_v(Obj *prog);
-		codegen_v(prog);
+		extern void codegen_v(Obj *prog, char *input);
+		codegen_v(prog, input);
 		return;
 	}
 	assign_lvar_offsets(prog);
