@@ -186,4 +186,7 @@ assert 3 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }'
 
 assert 8 'long x; int main() { return sizeof(x); }'
 assert 32 'long x[4]; int main() { return sizeof(x); }'
+
+assert 12 'int main(){long x[2];x[0]=8031924123371070824;x[1]=174353522;return printf(x);}'
+assert 13 'int main(){long x[2];x[0]=8031924123371070501;x[1]=174353522;return printf(x,123);}'
 echo OK
