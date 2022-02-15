@@ -104,7 +104,7 @@ static void gen_expr(Node *node) {
 	}
 	switch (node->kind) {
 		case ND_NUM:
-			printf("%d", node->val);
+			printf("%ld", node->val);
 			goto leave;
 		case ND_NEG:
 			printf("- ");

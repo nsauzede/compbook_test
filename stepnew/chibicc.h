@@ -17,7 +17,7 @@ typedef struct Token Token;
 struct Token {
 	TokenKind kind;
 	Token *next;
-	int val;
+	long val;
 	char *loc;
 	int len;
 };
@@ -102,7 +102,7 @@ struct Node {
 	Node *args;
 	
 	Obj *var;	// VAR
-	int val;	// NUM
+	long val;	// NUM
 
 // For V codegen :
 	bool paren;		// false=>none, true=>this node is within '()'

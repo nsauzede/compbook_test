@@ -53,7 +53,7 @@ static void print_node(Node *node, int depth) {
 		case ND_FOR:fprintf(stderr, "FOR\n");break;
 		case ND_EQ:fprintf(stderr, "EQ\n");break;
 		case ND_VAR:fprintf(stderr, "LVAR\n");break;
-		case ND_NUM:fprintf(stderr, "NUM %d\n", node->val);break;
+		case ND_NUM:fprintf(stderr, "NUM %ld\n", node->val);break;
 		case ND_ASSIGN:fprintf(stderr, "ASSIGN\n");break;
 		case ND_ADDR:fprintf(stderr, "ADDR\n");break;
 		case ND_DEREF:fprintf(stderr, "DEREF\n");break;
@@ -126,7 +126,7 @@ static Node *new_unary(NodeKind kind, Node *expr, Token *tok) {
 	return node;
 }
 
-static Node *new_num(int val, Token *tok) {
+static Node *new_num(long val, Token *tok) {
 	Node *node = new_node(ND_NUM, tok);
 	node->val = val;
 	// if (do_print_ast)
