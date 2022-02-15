@@ -56,7 +56,7 @@ void print_str(char *s, Token *token) {
 }
 
 void print_num(char *s, Token *token) {
-	fprintf(stderr, "%s'%d'\n", s, token->val);
+	fprintf(stderr, "%s'%ld'\n", s, token->val);
 }
 
 void print_token(Token *token) {

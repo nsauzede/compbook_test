@@ -8,6 +8,10 @@ int sub(int x, int y) { return x-y; }
 int add6(int a, int b, int c, int d, int e, int f) {
   return a+b+c+d+e+f;
 }
+void alloc4(int**p,int a1, int a2, int a3, int a4){
+*p=malloc(4*sizeof(a1));
+(*p)[0]=a1;(*p)[1]=a2;(*p)[2]=a3;(*p)[3]=a4;
+}
 EOF
 assert() {
     expected="$1";input="$2"
@@ -189,4 +193,9 @@ assert 32 'long x[4]; int main() { return sizeof(x); }'
 
 assert 12 'int main(){long x[2];x[0]=8031924123371070824;x[1]=174353522;return printf(x);}'
 assert 13 'int main(){long x[2];x[0]=8031924123371070501;x[1]=174353522;return printf(x,123);}'
+
+assert 42 'int main(){long x[2];x[0]=8031924123371070501;x[1]=174353522;printf(x,&x);return 42;}'
+assert 33 'int main(){int x,y;x=33;y=5;int *z=&y+1;return *z;}'
+assert 8 'int main(){int *p;alloc4(&p,1,2,4,8);int *q;q=p+3;return *q;}'
+
 echo OK
