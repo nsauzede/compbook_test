@@ -45,6 +45,17 @@ assert() {
     fi
 }
 
+if test "x$1" != "x"; then
+if test "x$2" != "x"; then
+echo "will do: assert $*"
+assert $1 "$2"
+exit $?
+else
+echo "Usage: $0 <assert_ret_code> <C code>"
+exit 1
+fi
+fi
+
 assert 3 'int main() { int x[2]; int *y=&x; *y=3; return *x; }'
 
 #################
@@ -197,5 +208,15 @@ assert 13 'int main(){long x[2];x[0]=8031924123371070501;x[1]=174353522;return p
 assert 42 'int main(){long x[2];x[0]=8031924123371070501;x[1]=174353522;printf(x,&x);return 42;}'
 assert 33 'int main(){int x,y;x=33;y=5;int *z=&y+1;return *z;}'
 assert 8 'int main(){int *p;alloc4(&p,1,2,4,8);int *q;q=p+3;return *q;}'
+
+assert 42 'int main(){long x[2];x[0]=8031924123371070501;x[1]=174353522;printf(x,sizeof main);return 42;}'
+
+assert 1 'int main(){return sizeof main;}'
+assert 8 'int main(){return sizeof&main;}'
+assert 4 'int main(){return sizeof 0;}'
+assert 8 'int main(){return sizeof sizeof 0;}'
+
+assert 3 'int main(){int a[2];*a=1;*(a+1)=2;int*p;p=a;return *p+*(p+1);}'
+assert 42 'int main(){int a[4];a[3]=42;a[0]=0;return 3[a];}'
 
 echo OK
