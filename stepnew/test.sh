@@ -219,4 +219,6 @@ assert 8 'int main(){return sizeof sizeof 0;}'
 assert 3 'int main(){int a[2];*a=1;*(a+1)=2;int*p;p=a;return *p+*(p+1);}'
 assert 42 'int main(){int a[4];a[3]=42;a[0]=0;return 3[a];}'
 
+assert 42 'int x;int main(){x=3;foo();return x;}int foo(){x=42;}'
+
 echo OK
