@@ -52,8 +52,8 @@ static void gen_addr(Node *node) {
 }
 
 // Load a value from where %rax is pointing to.
-static void load(Type *ty) {
-  if (ty->kind == TY_ARRAY) {
+static void load(Node *node) {
+if (node->ty->kind == TY_ARRAY) {
     // If it is an array, do not attempt to load a value to the
     // register because in general we can't load an entire array to a
     // register. As a result, the result of an evaluation of an array
@@ -62,14 +62,31 @@ static void load(Type *ty) {
     // the first element of the array in C" occurs.
     return;
   }
-    
-  printf("\tmov (%%rax), %%rax\n");
-}   
-  
+	switch (node->ty->size) {
+	case 8:
+		printf("\tmov (%%rax), %%rax\n");
+		break;
+	case 4:
+		printf("\tmov (%%rax), %%eax\n");
+		break;
+	default:
+		error_tok(node->tok, "unsupported load size %d", node->ty->size);
+	}
+}
+
 // Store %rax to an address that the stack top is pointing to.
-static void store(void) {
-  pop("%rdi");
-  printf("\tmov %%rax, (%%rdi)\n");
+static void store(Node *node) {
+	pop("%rdi");
+	switch (node->ty->size) {
+	case 8:
+		printf("\tmov %%rax, (%%rdi)\n");
+		break;
+	case 4:
+		printf("\tmov %%eax, (%%rdi)\n");
+		break;
+	default:
+		error_tok(node->tok, "unsupported store size %d", node->ty->size);
+	}
 }
 
 static void gen_expr(Node *node) {
@@ -83,11 +100,11 @@ static void gen_expr(Node *node) {
 			return;
 		case ND_VAR:
 			gen_addr(node);
-			load(node->ty);
+			load(node);
 			return;
 		case ND_DEREF:
 			gen_expr(node->lhs);
-			load(node->ty);
+			load(node);
 			return;
 		case ND_ADDR:
 			gen_addr(node->lhs);
@@ -96,7 +113,7 @@ static void gen_expr(Node *node) {
 			gen_addr(node->lhs);
 			push();
 			gen_expr(node->rhs);
-			store();
+			store(node);
 			return;
 		case ND_FUNCALL: {
 			int nargs = 0;
@@ -210,6 +227,10 @@ static void assign_lvar_offsets(Obj *prog) {
       var->offset = -offset;
     }
     fn->stack_size = align_to(offset, 16);
+		// Reverse offsets because we created lvars backward
+		for (Obj *var = fn->locals; var; var = var->next) {
+			var->offset = -fn->stack_size-var->offset-var->ty->size;
+		}
   }
 }
 
@@ -241,7 +262,18 @@ static void emit_text(Obj *prog) {
 		// save passed-by-registers args to the stack
 		int i = 0;
 		for (Obj *var = obj->params; var; var = var->next) {
-			printf("\tmov %s, %d(%%rbp)\n", argreg[i++], var->offset);
+			printf("\tmov %s, %%rax\n", argreg[i++]);
+			switch (var->ty->size) {
+			case 8:
+				printf("\tmov %%rax, %d(%%rbp)\n", var->offset);
+				break;
+			case 4:
+				printf("\tmov %%eax, %d(%%rbp)\n", var->offset);
+				break;
+			default:
+				fprintf(stderr, "unsupported passed-by-register arg size %d\n", var->ty->size);
+				exit(1);
+			}
 		}
 		// emit code
 		gen_stmt(obj->body);

@@ -1,10 +1,12 @@
 #include <malloc.h>
 #include "chibicc.h"
 
-Type *ty_int = &(Type){TY_INT, 8};
+Type *ty_int = &(Type){TY_INT, 4};
+Type *ty_long = &(Type){TY_LONG, 8};
+Type *ty_char = &(Type){TY_CHAR, 1};
 
 bool is_integer(Type *ty) {
-  return ty->kind == TY_INT;
+  return ty->kind == TY_INT || ty->kind == TY_LONG || ty->kind == TY_CHAR;
 }
 
 Type *copy_type(Type *ty) {
@@ -24,6 +26,7 @@ Type *pointer_to(Type *base) {
 Type *func_type(Type *return_ty) {
   Type *ty = calloc(1, sizeof(Type));
   ty->kind = TY_FUNC;
+  ty->size = 1;
   ty->return_ty = return_ty;
   return ty;
 }

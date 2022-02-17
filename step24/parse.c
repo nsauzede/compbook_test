@@ -150,8 +150,20 @@ static Obj *new_var(char *name, Type *ty) {
 static Obj *new_lvar(char *name, Type *ty) {
   Obj *var = new_var(name, ty);
   var->is_local = true;
+#if 1
   var->next = locals;
   locals = var;
+#else
+	if (!locals) {
+		locals = var;
+	} else {
+		Obj *next = locals;
+		while (next->next) {
+			next = next->next;
+		}
+		next->next = var;
+	}
+#endif
   return var;
 }
 
@@ -176,9 +188,11 @@ static int get_number(Token *tok) {
 }
 
 static Type *declspec(Token **rest, Token *tok) {
-	if (!consume(rest, tok, "long")) {
-		*rest = skip(tok, "int");
-	}
+	if (consume(rest, tok, "char"))
+		return ty_char;
+	if (consume(rest, tok, "long"))
+		return ty_long;
+	*rest = skip(tok, "int");
 	return ty_int;
 }
 
@@ -235,7 +249,9 @@ static Node *primary(Token **rest, Token *tok) {
 	} else if (equal(tok, "sizeof")) {
 		Node *node = unary(rest, tok->next);
 		add_type(node);
-		return new_num(node->ty->size, tok);
+		node = new_num(node->ty->size, tok);
+		node->ty = ty_long;
+		return node;
 	} else if (tok->kind == TK_IDENT) {
 		if (equal(tok->next, "(")) {
 			return funcall(rest, tok);
@@ -459,7 +475,7 @@ static Node *compound_stmt(Token **rest, Token *tok) {
   Node head = {};
   Node *cur = &head;
   while (!equal(tok, "}")) {
-    if (equal(tok, "int") || equal(tok, "long"))
+    if (equal(tok, "int") || equal(tok, "long") || equal(tok, "char"))
       cur = cur->next = declaration(&tok, tok);
     else
       cur = cur->next = stmt(&tok, tok);

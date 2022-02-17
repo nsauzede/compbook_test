@@ -7,7 +7,7 @@ func-params   = (param ("," param)*)? ")"
 param         = declspec declarator
 declaration   = declspec (declarator ("=" expr)? (",) ("," declarator ("=" expr)?)*)? ";"
 declarator    = "*"* ident type-suffix
-declspec      = "int" | "long"
+declspec      = "int" | "long" | "char"
 stmt          = "return" expr ";"
     | "if" "(" expr ")" stmt ("else" stmt)?
     | "for" "(" expr-stmt expr? ";" expr? ")" stmt

@@ -24,7 +24,11 @@ struct Token {
 
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
-void error_tok(Token *tok, char *fmt, ...);
+#define error_tok(t, f...) do { \
+		fprintf(stderr, "%s:%d:%s:", __FILE__, __LINE__, __FUNCTION__); \
+		_error_tok(t, f); \
+	} while (0);
+void _error_tok(Token *tok, char *fmt, ...);
 bool equal(Token *tok, char *op);
 Token *skip(Token *tok, char *op);
 bool consume(Token **rest, Token *tok, char *str);
@@ -68,9 +72,9 @@ typedef enum {
 	ND_FOR,			// 14
 	ND_BLOCK,		// 15
 	ND_FUNCALL,		// 16
-	ND_EXPR_STMT,	// 17
+	ND_EXPR_STMT,		// 17
 	ND_VAR,			// 18
-	ND_NUM,			// 19	integer/long
+	ND_NUM,			// 19	integer/long/char
 } NodeKind;
 
 typedef struct LVar LVar;
@@ -114,6 +118,8 @@ Obj *parse(Token *tok);
 
 typedef enum {
 	TY_INT,
+	TY_LONG,
+	TY_CHAR,
 	TY_PTR,
 	TY_FUNC,
 	TY_ARRAY,
@@ -132,6 +138,8 @@ struct Type {
 };
 
 extern Type *ty_int;
+extern Type *ty_long;
+extern Type *ty_char;
 
 bool is_integer(Type *ty);
 Type *pointer_to(Type *base);

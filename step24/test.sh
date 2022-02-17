@@ -19,7 +19,7 @@ assert() {
     echo "$input" > tmp.c.txt
     #cc -static -o tmp tmp.s tmp2.o
     
-    gcc -x c -o tmp.o tmp.c.txt -c ; gcc -static -o tmp tmp.o tmp2.o ; ./tmp ; actual="$?"
+    gcc -x c -O0 -fno-stack-protector -o tmp.gcc.s tmp.c.txt -S ; gcc -x c -o tmp.o tmp.c.txt -c ; gcc -static -o tmp tmp.o tmp2.o ; ./tmp ; actual="$?"
     if [ "$actual" = "$expected" ]; then
         echo "GCC $input => $actual"
     else
@@ -35,7 +35,7 @@ assert() {
         exit 1
     fi
 
-    ./chibicc "$input" > tmp.s ; ./tmp;actual="$?"
+    ./chibicc "$input" > tmp.s ; gcc -static -o tmp tmp.s tmp2.o ; ./tmp ; actual="$?"
     # gdb -q -nx -ex r --args ./chibicc "$input"
     if [ "$actual" = "$expected" ]; then
         echo "CHI $input => $actual"
@@ -220,5 +220,7 @@ assert 3 'int main(){int a[2];*a=1;*(a+1)=2;int*p;p=a;return *p+*(p+1);}'
 assert 42 'int main(){int a[4];a[3]=42;a[0]=0;return 3[a];}'
 
 assert 42 'int x;int main(){x=3;foo();return x;}int foo(){x=42;}'
+
+assert 4 'int x;int main(){return sizeof x;}'
 
 echo OK

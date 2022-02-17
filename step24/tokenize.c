@@ -39,7 +39,7 @@ void error_at(char *loc, char *fmt, ...) {
 	verror_at(loc, 0, fmt, ap);
 }
 
-void error_tok(Token *tok, char *fmt, ...) {
+void _error_tok(Token *tok, char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	verror_at(tok->loc, tok->len, fmt, ap);
@@ -143,7 +143,7 @@ static int read_punct(char *p) {
 
 static bool is_keyword(Token *tok) {
   static char *kw[] = {
-    "return", "if", "else", "for", "while", "int", "long", "sizeof",
+    "return", "if", "else", "for", "while", "int", "long", "char", "sizeof",
   };
 
   for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++)
