@@ -203,6 +203,7 @@ assert 8 'long x; int main() { return sizeof(x); }'
 assert 32 'long x[4]; int main() { return sizeof(x); }'
 
 assert 12 'int main(){long x[2];x[0]=8031924123371070824;x[1]=174353522;return printf(x);}'
+# 8031924123371070501=0x6f77206f6c6c6425 %=25 l=6c d=64
 assert 13 'int main(){long x[2];x[0]=8031924123371070501;x[1]=174353522;return printf(x,123);}'
 
 assert 42 'int main(){long x[2];x[0]=8031924123371070501;x[1]=174353522;printf(x,&x);return 42;}'
@@ -222,5 +223,10 @@ assert 42 'int main(){int a[4];a[3]=42;a[0]=0;return 3[a];}'
 assert 42 'int x;int main(){x=3;foo();return x;}int foo(){x=42;}'
 
 assert 4 'int x;int main(){return sizeof x;}'
+assert 1 'char x;int main(){return sizeof x;}'
+# 8031924123371070245=0x6f77206f6c6c6325 %=25 c=63
+assert 42 'int main(){char c=65;long x[2];x[0]=8031924123371070245;x[1]=174353522;printf(x,c);return 42;}'
+assert 65 'int main(){char x=65;return x;}'
+#assert 42 "int main(){char c='B';long x[2];x[0]=8031924123371070245;x[1]=174353522;printf(x,c);return 42;}"
 
 echo OK

@@ -69,6 +69,9 @@ if (node->ty->kind == TY_ARRAY) {
 	case 4:
 		printf("\tmov (%%rax), %%eax\n");
 		break;
+	case 1:
+		printf("\tmov (%%rax), %%al\n");
+		break;
 	default:
 		error_tok(node->tok, "unsupported load size %d", node->ty->size);
 	}
@@ -83,6 +86,9 @@ static void store(Node *node) {
 		break;
 	case 4:
 		printf("\tmov %%eax, (%%rdi)\n");
+		break;
+	case 1:
+		printf("\tmov %%al, (%%rdi)\n");
 		break;
 	default:
 		error_tok(node->tok, "unsupported store size %d", node->ty->size);
