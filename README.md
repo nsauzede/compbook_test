@@ -19,3 +19,8 @@ Once reached, subsequent goals could be : (in no specific order/priority/realism
 
 Have fun following the book yourself ! I recommend trying it !!
 
+# how to test all the steps
+
+```shell
+find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
+```
