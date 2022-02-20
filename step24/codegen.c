@@ -67,10 +67,10 @@ if (node->ty->kind == TY_ARRAY) {
 		printf("\tmov (%%rax), %%rax\n");
 		break;
 	case 4:
-		printf("\tmov (%%rax), %%eax\n");
+		printf("\tmovsxd (%%rax), %%rax\n");
 		break;
 	case 1:
-		printf("\tmov (%%rax), %%al\n");
+		printf("\tmovsbl (%%rax), %%eax\n");
 		break;
 	default:
 		error_tok(node->tok, "unsupported load size %d", node->ty->size);
