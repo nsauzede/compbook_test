@@ -230,4 +230,13 @@ assert 42 'int main(){char*fmt="hello%c";char n=10;printf(fmt,n);return 42;}'
 assert 42 'int main(){char*fmt="hello%c";printf(fmt,10);return 42;}'
 assert 42 'int main(){char*fmt="hello %s%c";char*world="world";printf(fmt,world,10);return 42;}'
 
+assert 0 'int main() { return ""[0]; }'
+assert 1 'int main() { return sizeof(""); }'
+
+assert 97 'int main() { return "abc"[0]; }'
+assert 98 'int main() { return "abc"[1]; }'
+assert 99 'int main() { return "abc"[2]; }'
+assert 0 'int main() { return "abc"[3]; }'
+assert 4 'int main() { return sizeof("abc"); }'
+
 echo OK
