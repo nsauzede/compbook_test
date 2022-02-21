@@ -163,7 +163,7 @@ Token *tokenize(char *p) {
 	user_input = p;
 	Token head = {};
 	Token *cur = &head;
-	fprintf(stderr, "input string=%s\n", p);
+//	fprintf(stderr, "input string=%s\n", p);
 	while (*p) {
 		if (startswith(p, "//")) {
 			p += 2;

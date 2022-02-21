@@ -13,13 +13,17 @@ void alloc4(int**p,int a1, int a2, int a3, int a4){
 (*p)[0]=a1;(*p)[1]=a2;(*p)[2]=a3;(*p)[3]=a4;
 }
 EOF
+cat <<EOF > tmp.h
+int sub_char(char a, char b, char c);
+EOF
 assert() {
     expected="$1";input="$2"
     echo "Testing input=[$input].."
     echo "$input" > tmp.c.txt
     #cc -static -o tmp tmp.s tmp2.o
-    
-    gcc -x c -O0 -fno-stack-protector -o tmp.gcc.s tmp.c.txt -S ; gcc -x c -o tmp.o tmp.c.txt -c ; gcc -static -o tmp tmp.o tmp2.o ; ./tmp ; actual="$?"
+
+    actual=""
+    gcc -include tmp.h -O0 -fno-stack-protector -o tmp.gcc.s -x c tmp.c.txt -S ; gcc -include tmp.h -o tmp.o -x c tmp.c.txt -c ; gcc -static -o tmp tmp.o tmp2.o ; ./tmp ; actual="$?"
     if [ "$actual" = "$expected" ]; then
         echo "GCC $input => $actual"
     else
@@ -27,7 +31,8 @@ assert() {
         exit 1
     fi
 
-    tcc -x c -o tmp tmp.c.txt ; ./tmp ; actual="$?"
+    actual=""
+    tcc -include tmp.h -o tmp -x c tmp.c.txt ; ./tmp ; actual="$?"
     if [ "$actual" = "$expected" ]; then
         echo "TCC $input => $actual"
     else
@@ -35,7 +40,8 @@ assert() {
         exit 1
     fi
 
-    ./chibicc "$input" > tmp.s || exit $? && gcc -static -o tmp tmp.s tmp2.o && ./tmp && actual="$?"
+    actual=""
+    ./chibicc "$input" > tmp.s || exit $? && gcc -static -o tmp tmp.s tmp2.o && ./tmp ; actual="$?"
     # gdb -q -nx -ex r --args ./chibicc "$input"
     if [ "$actual" = "$expected" ]; then
         echo "CHI $input => $actual"
@@ -119,17 +125,11 @@ assert 10 'int main() { int i=0; while(i<10) i=i+1; return i; }'
 assert 55 'int main() { int i=0; int j=0; while(i<=10) {j=i+j; i=i+1;} return j; }'
 
 assert 3 'int main() { int x=3; return *&x; }'
-assert 3 'int main() { int x[2]; int *y=&x; *y=3; return *x; }'
 assert 3 'int main() { int x=3; int *y=&x; int **z=&y; return **z; }'
-# assert 5 'int main() { int x=3; int y=5; return *(&x+1); }'
 assert 5 'int main() { int x=3; int y=5; int z=7; if (&y > &z) return *(&z+1); else return *(&x+1); }'
-# assert 3 'int main() { int x=3; int y=5; return *(&y-1); }'
 assert 3 'int main() { int z=7; int x=3; int y=5; if (&y > &x) return *(&y-1); else return *(&z-1);}'
-# assert 5 'int main() { int x=3; int y=5; return *(&x-(-1)); }'
 assert 5 'int main() { int x=3; int y=5; int z = 7; if (&y > &x) return *(&x-(-1)); else return *(&z-(-1)); }'
-# assert 7 'int main() { int x=3; int y=5; *(&x+1)=7; return y; }'
 assert 7 'int main() { int x=3; int y=5; int z=9; if (&y > &x) *(&x+1)=7; else *(&z+1)=7; return y; }'
-# assert 7 'int main() { int x=3; int y=5; *(&y-2+1)=7; return x; }'
 assert 7 'int main() { int z=9; int x=3; int y=5; if (&z > &x) *(&z-2+1)=7; else *(&y-2+1)=7; return x; }'
 assert 5 'int main() { int x=3; return (&x+2)-&x+3; }'
 assert 8 'int main() { int x, y; x=3; y=5; return x+y; }'
@@ -147,6 +147,8 @@ assert 32 'int main() { return ret32(); } int ret32() { return 32; }'
 assert 7 'int main() { return add2(3,4); } int add2(int x, int y) { return x+y; }'
 assert 1 'int main() { return sub2(4,3); } int sub2(int x, int y) { return x-y; }'
 assert 55 'int main() { return fib(9); } int fib(int x) { if (x<=1) return 1; return fib(x-1) + fib(x-2); }'
+
+assert 3 'int main() { int x[2]; int *y=&x; *y=3; return *x; }'
 
 assert 3 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x; }'
 assert 4 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *(x+1); }'
@@ -172,18 +174,17 @@ assert 3 'int main() { int x[2][3]; int *y=x; y[3]=3; return x[1][0]; }'
 assert 4 'int main() { int x[2][3]; int *y=x; y[4]=4; return x[1][1]; }'
 assert 5 'int main() { int x[2][3]; int *y=x; y[5]=5; return x[1][2]; }'
 
-assert 8 'int main() { long x; return sizeof(x); }'
-assert 8 'int main() { long x; return sizeof x; }'
+assert 4 'int main() { int x; return sizeof(x); }'
+assert 4 'int main() { int x; return sizeof x; }'
 assert 8 'int main() { int *x; return sizeof(x); }'
-assert 4 'int main() { int *x; return sizeof(*x); }'
-assert 32 'int main() { long x[4]; return sizeof(x); }'
-assert 96 'int main() { long x[3][4]; return sizeof(x); }'
-assert 32 'int main() { long x[3][4]; return sizeof(*x); }'
-assert 8 'int main() { long x[3][4]; return sizeof(**x); }'
-assert 9 'int main() { long x[3][4]; return sizeof(**x) + 1; }'
-assert 9 'int main() { long x[3][4]; return sizeof **x + 1; }'
-assert 8 'int main() { long x[3][4]; return sizeof(**x + 1); }'
-assert 8 'int main() { long x=1; return sizeof(x=2); }'
+assert 16 'int main() { int x[4]; return sizeof(x); }'
+assert 48 'int main() { int x[3][4]; return sizeof(x); }'
+assert 16 'int main() { int x[3][4]; return sizeof(*x); }'
+assert 4 'int main() { int x[3][4]; return sizeof(**x); }'
+assert 5 'int main() { int x[3][4]; return sizeof(**x) + 1; }'
+assert 5 'int main() { int x[3][4]; return sizeof **x + 1; }'
+assert 4 'int main() { int x[3][4]; return sizeof(**x + 1); }'
+assert 4 'int main() { int x=1; return sizeof(x=2); }'
 assert 1 'int main() { int x=1; sizeof(x=2); return x; }'
 
 assert 0 'int x; int main() { return x; }'
@@ -195,40 +196,16 @@ assert 1 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[1]; }'
 assert 2 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[2]; }'
 assert 3 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }'
 
-assert 8 'long x; int main() { return sizeof(x); }'
-assert 32 'long x[4]; int main() { return sizeof(x); }'
+assert 4 'int x; int main() { return sizeof(x); }'
+assert 16 'int x[4]; int main() { return sizeof(x); }'
 
-assert 12 'int main(){long x[2];x[0]=8031924123371070824;x[1]=174353522;return printf(x);}'
-# 8031924123371070501=0x6f77206f6c6c6425 %=25 l=6c d=64
-assert 13 'int main(){long x[2];x[0]=8031924123371070501;x[1]=174353522;return printf(x,123);}'
+assert 1 'int main() { char x=1; return x; }'
+assert 1 'int main() { char x=1; char y=2; return x; }'
+assert 2 'int main() { char x=1; char y=2; return y; }'
 
-assert 42 'int main(){long x[2];x[0]=8031924123371070501;x[1]=174353522;printf(x,&x);return 42;}'
-assert 33 'int main(){int x,y;x=33;y=5;int *z=&y+1;return *z;}'
-assert 8 'int main(){int *p;alloc4(&p,1,2,4,8);int *q;q=p+3;return *q;}'
-
-assert 42 'int main(){long x[2];x[0]=8031924123371070501;x[1]=174353522;printf(x,sizeof main);return 42;}'
-
-assert 1 'int main(){return sizeof main;}'
-assert 8 'int main(){return sizeof&main;}'
-assert 4 'int main(){return sizeof 0;}'
-assert 8 'int main(){return sizeof sizeof 0;}'
-
-assert 3 'int main(){int a[2];*a=1;*(a+1)=2;int*p;p=a;return *p+*(p+1);}'
-assert 42 'int main(){int a[4];a[3]=42;a[0]=0;return 3[a];}'
-
-assert 42 'int x;int main(){x=3;foo();return x;}int foo(){x=42;}'
-
-assert 4 'int x;int main(){return sizeof x;}'
-assert 1 'char x;int main(){return sizeof x;}'
-# 8031924123371070245=0x6f77206f6c6c6325 %=25 c=63
-assert 42 'int main(){char c=65;long x[2];x[0]=8031924123371070245;x[1]=174353522;printf(x,c);return 42;}'
-assert 65 'int main(){char x=65;return x;}'
-#assert 42 "int main(){char c='B';long x[2];x[0]=8031924123371070245;x[1]=174353522;printf(x,c);return 42;}"
-
-assert 42 'int main(){char*s="hellon";printf(s);return 42;}'
-assert 42 'int main(){char*fmt="hello%c";char n=10;printf(fmt,n);return 42;}'
-assert 42 'int main(){char*fmt="hello%c";printf(fmt,10);return 42;}'
-assert 42 'int main(){char*fmt="hello %s%c";char*world="world";printf(fmt,world,10);return 42;}'
+assert 1 'int main() { char x; return sizeof(x); }'
+assert 10 'int main() { char x[10]; return sizeof(x); }'
+assert 2 'int main() { return sub_char(7, 3, 2); }int sub_char(char a, char b, char c) { return a-b-c; }'
 
 assert 0 'int main() { return ""[0]; }'
 assert 1 'int main() { return sizeof(""); }'
@@ -238,5 +215,23 @@ assert 98 'int main() { return "abc"[1]; }'
 assert 99 'int main() { return "abc"[2]; }'
 assert 0 'int main() { return "abc"[3]; }'
 assert 4 'int main() { return sizeof("abc"); }'
+
+assert 7 'int main() { return "\a"[0]; }'
+assert 8 'int main() { return "\b"[0]; }'
+assert 9 'int main() { return "\t"[0]; }'
+assert 10 'int main() { return "\n"[0]; }'
+assert 11 'int main() { return "\v"[0]; }'
+assert 12 'int main() { return "\f"[0]; }'
+assert 13 'int main() { return "\r"[0]; }'
+assert 27 'int main() { return "\e"[0]; }'
+
+assert 106 'int main() { return "\j"[0]; }'
+assert 107 'int main() { return "\k"[0]; }'
+assert 108 'int main() { return "\l"[0]; }'
+
+assert 7 'int main() { return "\ax\ny"[0]; }'
+assert 120 'int main() { return "\ax\ny"[1]; }'
+assert 10 'int main() { return "\ax\ny"[2]; }'
+assert 121 'int main() { return "\ax\ny"[3]; }'
 
 echo OK

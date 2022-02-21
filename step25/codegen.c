@@ -250,11 +250,31 @@ static void emit_data(Obj *prog) {
 		printf("%s:\n", obj->name);
 		if (obj->init_data) {
 			printf("\t.byte ");
+			int backslash = 0;
+			int first = 1;
 			for (int i = 0; i < obj->ty->size; i++) {
-				if (i>0) {
+				unsigned char c = ((unsigned char *)obj->init_data)[i];
+				if (backslash) {
+					c = c == 'a' ? '\a' :
+						c == 'b' ? '\b' :
+						c == 't' ? '\t' :
+						c == 'n' ? '\n' :
+						c == 'v' ? '\v' :
+						c == 'f' ? '\f' :
+						c == 'r' ? '\r' :
+						c == 'e' ? '\e' :
+						c;
+					backslash = 0;
+				} else if (c == '\\') {
+					backslash = 1;
+					continue;
+				}
+				if (first) {
+					first = 0;
+				} else {
 					printf(",");
 				}
-				printf("0x%02x", ((unsigned char *)obj->init_data)[i]);
+				printf("0x%02x", c);
 			}
 			printf("\n");
 		} else {
@@ -286,6 +306,9 @@ static void emit_text(Obj *prog) {
 				break;
 			case 4:
 				printf("\tmov %%eax, %d(%%rbp)\n", var->offset);
+				break;
+			case 1:
+				printf("\tmov %%al, %d(%%rbp)\n", var->offset);
 				break;
 			default:
 				fprintf(stderr, "unsupported passed-by-register arg size %d\n", var->ty->size);
