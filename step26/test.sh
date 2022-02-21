@@ -41,7 +41,7 @@ assert() {
     fi
 
     actual=""
-    echo "$input" > tmp.c.txt ; ./chibicc tmp.c.txt > tmp.s || exit $? && gcc -static -o tmp tmp.s tmp2.o && ./tmp ; actual="$?"
+    ./chibicc tmp.c.txt > tmp.s || exit $? && gcc -static -o tmp tmp.s tmp2.o && ./tmp ; actual="$?"
     # gdb -q -nx -ex r --args ./chibicc "$input"
     if [ "$actual" = "$expected" ]; then
         echo "CHI $input => $actual"

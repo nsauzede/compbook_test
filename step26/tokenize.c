@@ -12,17 +12,42 @@ Token *token;
 #define NRM() "\x1b[0m"
 static char *user_input;
 static char *user_file = "<stdin>";
-static int user_line = 1;
+//static int user_line = 1;
+static char *get_line_col(int *line, int *col, int pos) {
+	char *str = user_input;
+	*line = 1;
+	if (strcmp(user_file, "<stdin>")) {
+		*col = 1;
+		for (int i = 0; i < pos; i++) {
+			if (user_input[i] == '\n') {
+				*line+=1;
+				*col = 0;
+				str = &user_input[i + 1];
+			}
+			*col+=1;
+		}
+	}
+	str = strdup(str);
+	char *p = strchr(str, '\n');
+	if (p) {
+		*p = 0;
+	}
+	return str;
+}
 static void verror_at(char *loc, int len, char *fmt, va_list ap) {
 	int pos = 0;
+	char *str = 0;
 	if (loc) {
 		pos = loc - user_input;
-		fprintf(stderr, "%s:%d:%d: %serror%s: ", user_file, user_line, pos + 1, RED(), NRM());
+		int user_line, user_col;
+		str = get_line_col(&user_line, &user_col, pos);
+		fprintf(stderr, "%s:%d:%d: %serror%s: ", user_file, user_line, user_col, RED(), NRM());
+		pos = user_col - 1;
 	}
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	if (loc) {
-		fprintf(stderr, "%s\n", user_input);
+		fprintf(stderr, "%s\n", str);
 		fprintf(stderr, "%*s", pos, "");
 		fprintf(stderr, "^ len=%d\n", len);
 	}
@@ -256,5 +281,6 @@ static char *read_string(char *input_file) {
 // tokenize the input file and return its tokens
 Token *tokenize(char *input_file) {
 	char *input = read_string(input_file);
+	user_file = input_file;
 	return tokenize_string(input);
 }
