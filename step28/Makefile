@@ -19,7 +19,7 @@ all: $(TARGET)
 chibicc: $(OBJS)
 	$(CC0) -o $@ $^ $(LDFLAGS)
 
-test: $(TARGET)
+test0: $(TARGET)
 	./test.sh
 
 check: $(TARGET)
@@ -41,7 +41,7 @@ test/%.exe: test/%.c
 test2_: $(TESTS)
 	for i in $^; do echo $$i; ./$$i || exit 1; echo; done
 
-test2:
+test:
 	$(MAKE) clean test2_ CCT=gcc
 #	$(MAKE) clean test2_ CCT=tcc
 	$(MAKE) clean all test2_ CCT=./chibicc

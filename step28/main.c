@@ -14,6 +14,11 @@ int main(int argc, char *argv[]) {
 	while (arg < argc) {
 		if (*argv[arg] == '-' && strlen(argv[arg]) > 1) {
 
+		if (!strcmp(argv[arg], "--help")) {
+			fprintf(stderr, "Compiler Book test - %s\n", VERSION);
+			fprintf(stderr, "Usage: %s [-x c] <file.c>\n", argv[0]);
+			return 0;
+		}
 		if (!strcmp(argv[arg], "-S")) {
 			arg++;
 			continue;
@@ -56,8 +61,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	if (!in) {
-		fprintf(stderr, "Compiler Book test - %s\n", VERSION);
-		fprintf(stderr, "Usage: %s [-x c] <file.c>\n", argv[0]);
+		fprintf(stderr, "No input file\n");
 		return 1;
 	}
 	Token *tok = tokenize(in);
