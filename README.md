@@ -18,12 +18,13 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 
 # Roadmap
 ## Driver phases
-- [x] tokenizer
-- [x] parser
+- [ ] preprocessor (.c)
+- [x] tokenizer (Token *)
+- [x] parser (Obj *)
 - [x] code generator (.s)
 - [ ] assembler (.o)
 - [ ] linker (.elf)
-## Features
+## Features done
 - [x] compile integer into executable that exits with it
 - [x] +,-,*,/,() operators
 - [x] if/for/while
@@ -38,6 +39,11 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] Quine support
 - [ ] octal/hex in strings
 - [ ] block scope (local vars shadowing)
+## Features TODO
+- [ ] .file/.loc
+- [ ] comma operator
+- [ ] struct
+- [ ] -> operator
 
 # Old notes
 *Note: initially I planned to code it in vlang (which would have made it NOT self-hosted ofc), but the clarity of the actual C code samples of the book, made me change my mind :-)*
