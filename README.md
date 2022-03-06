@@ -44,6 +44,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [ ] comma operator
 - [ ] struct
 - [ ] -> operator
+- [ ] union
 
 # Old notes
 *Note: initially I planned to code it in vlang (which would have made it NOT self-hosted ofc), but the clarity of the actual C code samples of the book, made me change my mind :-)*
