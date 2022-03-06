@@ -261,17 +261,64 @@ static void emit_data(Obj *prog) {
 		PRINTF("%s:\n", obj->name);
 		if (obj->init_data) {
 			PRINTF("\t.byte ");
-			int backslash = 0;
+			int backslash = 0, hex = 0, oct = 0;
+			int num = 0, count = 0;
 			int first = 1;
 			for (int i = 0; i < obj->ty->size; i++) {
 				unsigned char c = ((unsigned char *)obj->init_data)[i];
 				if (backslash) {
-					if (c == 'x') {
+					fprintf(stderr, "parsing %c (%d)\n", c, c);
+					if (hex) {
+						if (isxdigit(c)) {
+//							fprintf(stderr, "accumulating hex %c\n", c);
+							num <<= 4;
+							if (c <= '9') {
+								c -= '0';
+							} else {
+								c |= ' ';
+								c -= 'a';
+							}
+							num += c;
+							continue;
+						} else {
+							if (first) {
+								first = 0;
+							} else {
+								PRINTF(",");
+							}
+							PRINTF("0x%02x", num);
+						}
+					} else if (oct) {
+						if (c >= '0' && c <= '7' && count < 3) {
+							fprintf(stderr, "accumulating oct %c\n", c);
+							num <<= 3;
+							num += c - '0';
+							count++;
+							continue;
+						} else {
+							if (first) {
+								first = 0;
+							} else {
+								PRINTF(",");
+							}
+							PRINTF("0x%02x", num);
+						}
+					} else if (c == 'x') {
+#if 1
+						hex = 1;
+						continue;
+#else
 						fprintf(stderr, "hex escape unsupported\n");
 						exit(1);
+#endif
 					} else if (c >= '0' && c <= '7') {
+#if 1
+						oct = 1;
+						continue;
+#else
 						fprintf(stderr, "octal escape unsupported\n");
 						exit(1);
+#endif
 					} else {
 						c = c == 'a' ? '\a' :
 							c == 'b' ? '\b' :
@@ -284,6 +331,10 @@ static void emit_data(Obj *prog) {
 							c;
 					}
 					backslash = 0;
+					hex = 0;
+					oct = 0;
+					count = 0;
+					num = 0;
 				} else if (c == '\\') {
 					backslash = 1;
 					continue;

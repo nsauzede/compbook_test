@@ -32,8 +32,8 @@ int main() {
 //  ASSERT(16, "\20"[0]);
 //  ASSERT(65, "\101"[0]);
 //  ASSERT(104, "\1500"[0]);
-//  ASSERT(0, "\x00"[0]);
-//  ASSERT(119, "\x77"[0]);
+  ASSERT(0, "\x00"[0]);
+  ASSERT(119, "\x77"[0]);
 
   printf("OK\n");
   return 0;
