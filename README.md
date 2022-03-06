@@ -37,7 +37,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] GNU statement expression
 - [x] C tests
 - [x] Quine support
-- [ ] octal/hex in strings
+- [x] octal/hex in strings
 - [ ] block scope (local vars shadowing)
 ## Features TODO
 - [ ] .file/.loc

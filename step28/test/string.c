@@ -28,10 +28,10 @@ int main() {
   ASSERT(10, "\ax\ny"[2]);
   ASSERT(121, "\ax\ny"[3]);
 
-//  ASSERT(0, "\0"[0]);
-//  ASSERT(16, "\20"[0]);
-//  ASSERT(65, "\101"[0]);
-//  ASSERT(104, "\1500"[0]);
+  ASSERT(0, "\0"[0]);
+  ASSERT(16, "\20"[0]);
+  ASSERT(65, "\101"[0]);
+  ASSERT(104, "\1500"[0]);
   ASSERT(0, "\x00"[0]);
   ASSERT(119, "\x77"[0]);
 
