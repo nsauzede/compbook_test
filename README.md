@@ -38,7 +38,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] C tests
 - [x] Quine support
 - [x] octal/hex in strings
-- [ ] block scope (local vars shadowing)
+- [x] block scope (local vars shadowing)
 ## Features TODO
 - [ ] .file/.loc
 - [ ] comma operator
