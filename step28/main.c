@@ -10,17 +10,25 @@
 int main(int argc, char *argv[]) {
 	char *in = 0;
 	char *out = 0;
+	int opt_S = 0;
+	int opt_E = 0;
 	int arg = 1;
 	while (arg < argc) {
 		if (*argv[arg] == '-' && strlen(argv[arg]) > 1) {
 
-		if (!strcmp(argv[arg], "--help")) {
+		if (!strcmp(argv[arg], "--help") && !strcmp(argv[arg], "-h")) {
 			fprintf(stderr, "Compiler Book test - %s\n", VERSION);
-			fprintf(stderr, "Usage: %s [-x c] <file.c>\n", argv[0]);
+			fprintf(stderr, "Usage: %s [-x c] [-S] <file.c> [-o <output_file>]\n", argv[0]);
 			return 0;
 		}
 		if (!strcmp(argv[arg], "-S")) {
 			arg++;
+			opt_S = 1;
+			continue;
+		}
+		if (!strcmp(argv[arg], "-E")) {
+			arg++;
+			opt_E = 1;
 			continue;
 		}
 		if (!strcmp(argv[arg], "-o")) {
@@ -64,7 +72,8 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "No input file\n");
 		return 1;
 	}
-	Token *tok = tokenize(in);
+	Token *tok = tokenize_file(in);
+	tok = preprocess(tok);
 	Obj *obj = parse(tok);
 	char *assembly = codegen(obj);
 	if (out) {

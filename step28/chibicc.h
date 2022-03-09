@@ -36,7 +36,10 @@ void _error_tok(Token *tok, char *fmt, ...);
 bool equal(Token *tok, char *op);
 Token *skip(Token *tok, char *op);
 bool consume(Token **rest, Token *tok, char *str);
-Token *tokenize(char *input_file);
+void convert_keywords(Token *tok);
+Token *tokenize_file(char *input_file);
+
+Token *preprocess(Token *tok);
 
 typedef struct Obj Obj;
 struct Obj {

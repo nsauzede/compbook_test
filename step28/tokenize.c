@@ -178,7 +178,7 @@ static bool is_keyword(Token *tok) {
   return false;
 }
 
-static void convert_keywords(Token *tok) {
+void convert_keywords(Token *tok) {
   for (Token *t = tok; t->kind != TK_EOF; t = t->next)
     if (is_keyword(t))
       t->kind = TK_KEYWORD;
@@ -304,7 +304,7 @@ static char *read_string(char *input_file) {
 }
 
 // tokenize the input file and return its tokens
-Token *tokenize(char *input_file) {
+Token *tokenize_file(char *input_file) {
 	char *input = read_string(input_file);
 	user_file = input_file;
 	return tokenize_string(input);
