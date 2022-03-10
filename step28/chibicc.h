@@ -24,6 +24,8 @@ struct Token {
 	int len;
 	Type *ty;	// used if TK_STR
 	char *str;	// string litteral, including terminating 0
+
+	int line_no;
 };
 
 void error(char *fmt, ...);
@@ -150,7 +152,6 @@ Type *func_type(Type *return_ty);
 Type *array_of(Type *base, int size);
 void add_type(Node *node);
 
-char *codegen(Obj *prog);
-//void codegen(Obj *prog);
+char *codegen(Obj *prog, char *input_file);
 
 #endif/*__9CC_H__*/

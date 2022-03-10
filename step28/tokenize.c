@@ -29,6 +29,24 @@ static char *get_line_col(int *line, int *col, int pos) {
 	}
 	return str;
 }
+
+static void add_line_numbers(Token *tok) {
+	char *p = user_input;
+	int n = 1;
+	do {
+		if (!tok) {
+			break;
+		}
+		if (p == tok->loc) {
+			tok->line_no = n;
+			tok = tok->next;
+		}
+		if (*p == '\n') {
+			n++;
+		}
+	} while (*p++);
+}
+
 static void verror_at(char *loc, int len, char *fmt, va_list ap) {
 	int pos = 0;
 	char *str = 0;
@@ -264,6 +282,7 @@ static Token *tokenize_string(char *p) {
 		error_at(p, "invalid token");
 	}
 	cur = cur->next = new_token(TK_EOF, p, p);
+	add_line_numbers(head.next);
 	convert_keywords(head.next);
 	int do_print_tokens = 0;
 	char *env = getenv("PRINT_TOKENS");

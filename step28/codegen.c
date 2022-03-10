@@ -102,6 +102,7 @@ static void store(Node *node) {
 }
 
 static void gen_expr(Node *node) {
+	PRINTF("  .loc 1 %d  /* %s */\n", node->tok->line_no, __func__);
 	switch (node->kind) {
 		case ND_NUM:
 			PRINTF("\tmov $%ld, %%rax\n", node->val);
@@ -187,6 +188,7 @@ static void gen_expr(Node *node) {
 }
 
 static void gen_stmt(Node *node) {
+	PRINTF("  .loc 1 %d  /* %s */ \n", node->tok->line_no, __func__);
 	switch (node->kind) {
 		case ND_IF: {
 			int c = count();
@@ -386,9 +388,9 @@ static void emit_text(Obj *prog) {
 	}
 }
 
-//void codegen(Obj *prog) {
-char *codegen(Obj *prog) {
+char *codegen(Obj *prog, char *input_file) {
 	assembly_file = open_memstream(&assembly, &assembly_len);
+	PRINTF(".file 1 \"%s\"\n", input_file);
 
 	assign_lvar_offsets(prog);
 	emit_data(prog);

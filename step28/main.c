@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 	Token *tok = tokenize_file(in);
 	tok = preprocess(tok);
 	Obj *obj = parse(tok);
-	char *assembly = codegen(obj);
+	char *assembly = codegen(obj, in);
 	if (out) {
 		FILE *f = fopen(out, "wt");
 		fwrite(assembly, strlen(assembly), 1, f);
