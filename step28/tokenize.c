@@ -15,6 +15,7 @@ static char *user_file = "<stdin>";
 static char *get_line_col(int *line, int *col, int pos) {
 	char *str = user_input;
 	*line = 1;
+	*col = 0;
 	if (strcmp(user_file, "<stdin>")) {
 		*col = 1;
 		for (int i = 0; i < pos; i++) {
@@ -25,11 +26,6 @@ static char *get_line_col(int *line, int *col, int pos) {
 			}
 			*col+=1;
 		}
-	}
-	str = strdup(str);
-	char *p = strchr(str, '\n');
-	if (p) {
-		*p = 0;
 	}
 	return str;
 }
@@ -46,7 +42,12 @@ static void verror_at(char *loc, int len, char *fmt, va_list ap) {
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	if (loc) {
-		fprintf(stderr, "%s\n", str);
+		int slen = strlen(str);
+		char *p = strchr(str, '\n');
+		if (p) {
+			slen = p - str;
+		}
+		fprintf(stderr, "%.*s\n", slen, str);
 		fprintf(stderr, "%*s", pos, "");
 		fprintf(stderr, "^ len=%d\n", len);
 	}
