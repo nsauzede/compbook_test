@@ -73,17 +73,18 @@ typedef enum {
 	ND_LT,			// 7	<
 	ND_LE,			// 8	<=
 	ND_ASSIGN,		// 9	=
-	ND_ADDR,		// 10	unary &
-	ND_DEREF,		// 11	unary *
-	ND_RETURN,		// 12
-	ND_IF,			// 13
-	ND_FOR,			// 14
-	ND_BLOCK,		// 15
-	ND_FUNCALL,		// 16
-	ND_EXPR_STMT,		// 17
-	ND_STMT_EXPR,		// 18
-	ND_VAR,			// 19
-	ND_NUM,			// 20	integer/long/char
+	ND_COMMA,		// 10	,
+	ND_ADDR,		// 11	unary &
+	ND_DEREF,		// 12	unary *
+	ND_RETURN,		// 13
+	ND_IF,			// 14
+	ND_FOR,			// 15
+	ND_BLOCK,		// 16
+	ND_FUNCALL,		// 17
+	ND_EXPR_STMT,		// 18
+	ND_STMT_EXPR,		// 19
+	ND_VAR,			// 20
+	ND_NUM,			// 21	integer/long/char
 } NodeKind;
 
 typedef struct LVar LVar;

@@ -71,6 +71,7 @@ static void print_node(Node *node, int depth) {
 		case ND_VAR:fprintf(stderr, "LVAR\n");break;
 		case ND_NUM:fprintf(stderr, "NUM %ld\n", node->val);break;
 		case ND_ASSIGN:fprintf(stderr, "ASSIGN\n");break;
+		case ND_COMMA:fprintf(stderr, "COMMA\n");break;
 		case ND_ADDR:fprintf(stderr, "ADDR\n");break;
 		case ND_DEREF:fprintf(stderr, "DEREF\n");break;
 		case ND_ADD:fprintf(stderr, "ADD\n");break;
@@ -510,7 +511,14 @@ static Node *assign(Token **rest, Token *tok) {
 }
 
 static Node *expr(Token **rest, Token *tok) {
-	return assign(rest, tok);
+	Node *node = assign(&tok, tok);
+
+	if (equal(tok, ",")) {
+		return new_binary(ND_COMMA, node, expr(rest, tok->next), tok);
+	}
+
+	*rest = tok;
+	return node;
 }
 
 static Node *expr_stmt(Token **rest, Token *tok) {

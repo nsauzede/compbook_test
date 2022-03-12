@@ -16,7 +16,7 @@ stmt          = "return" expr ";"
     | expr-stmt
 compound-stmt = (declaration | stmt)* "}"
 expr-stmt     = expr? ";"
-expr          = assign
+expr          = assign ("," expr)?
 assign        = equality ("=" assign)?
 equality      = relational ("==" relational | "!=" relational)*
 relational    = add ("<" add | "<=" add | ">" add | ">=" add)*

@@ -12,6 +12,10 @@ int main(int argc, char *argv[]) {
 	char *out = 0;
 	int opt_S = 0;
 	int opt_E = 0;
+	int opt_std_c11 = 0;
+	int opt_g = 0;
+	int opt_O0 = 0;
+	int opt_D_POSIX_C_SOURCE_200809L = 0;
 	int arg = 1;
 	while (arg < argc) {
 		if (*argv[arg] == '-' && strlen(argv[arg]) > 1) {
@@ -29,6 +33,31 @@ int main(int argc, char *argv[]) {
 		if (!strcmp(argv[arg], "-E")) {
 			arg++;
 			opt_E = 1;
+			continue;
+		}
+		if (!strcmp(argv[arg], "-std=c11")) {
+			arg++;
+			opt_std_c11 = 1;
+			continue;
+		}
+		if (!strcmp(argv[arg], "-g")) {
+			arg++;
+			opt_g = 1;
+			continue;
+		}
+		if (!strcmp(argv[arg], "-O0")) {
+			arg++;
+			opt_O0 = 1;
+			continue;
+		}
+		if (!strcmp(argv[arg], "-O0")) {
+			arg++;
+			opt_O0 = 1;
+			continue;
+		}
+		if (!strcmp(argv[arg], "-D_POSIX_C_SOURCE=200809L")) {
+			arg++;
+			opt_D_POSIX_C_SOURCE_200809L = 1;
 			continue;
 		}
 		if (!strcmp(argv[arg], "-o")) {

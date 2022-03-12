@@ -30,7 +30,7 @@ check: $(TARGET)
 
 test/%.exe: test/%.c
 #	$(CC) -o- -E -P -C test/$*.c | $(CCT) -S -o test/$*.s -x c - && $(CC) -o $@ test/$*.s
-	$(CC) -E -P -C -o test/$*.i test/$*.c && $(CCT) -S -o test/$*.s -x c test/$*.i && $(CC) -o $@ test/$*.s -x c test/common
+	$(CC) $(CFLAGS) -E -P -C -o test/$*.i test/$*.c && $(CCT) $(CFLAGS) -S -o test/$*.s -x c test/$*.i && $(CC) -o $@ test/$*.s -x c test/common
 
 #	$(CC) -E -P -C -o test/$*.i test/$*.c && $(CCT) -o $@ -x c test/$*.i
 

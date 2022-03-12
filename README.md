@@ -40,8 +40,8 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] octal/hex in strings
 - [x] block scope (local vars shadowing)
 ## Features TODO
-- [ ] .file/.loc
-- [ ] comma operator
+- [x] .file/.loc
+- [x] comma operator
 - [ ] struct
 - [ ] -> operator
 - [ ] union
