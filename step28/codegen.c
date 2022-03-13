@@ -249,21 +249,22 @@ static void gen_stmt(Node *node) {
 }
 
 static void assign_lvar_offsets(Obj *prog) {
-  for (Obj *fn = prog; fn; fn = fn->next) {
-    if (!fn->is_function)
-      continue;
+	for (Obj *fn = prog; fn; fn = fn->next) {
+		if (!fn->is_function)
+			continue;
 
-    int offset = 0;
-    for (Obj *var = fn->locals; var; var = var->next) {
-      offset += var->ty->size;
-      var->offset = -offset;
-    }
-    fn->stack_size = align_to(offset, 16);
+		int offset = 0;
+		for (Obj *var = fn->locals; var; var = var->next) {
+			offset += var->ty->size;
+			offset = align_to(offset, var->ty->align);
+			var->offset = -offset;
+		}
+		fn->stack_size = align_to(offset, 16);
 		// Reverse offsets because we created lvars backward
 		for (Obj *var = fn->locals; var; var = var->next) {
 			var->offset = -fn->stack_size-var->offset-var->ty->size;
 		}
-  }
+	}
 }
 
 static void emit_data(Obj *prog) {
