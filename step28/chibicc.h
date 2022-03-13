@@ -3,7 +3,9 @@
 
 #include <stdbool.h>
 
+typedef struct Type Type;
 typedef struct Node Node;
+typedef struct Member Member;
 
 typedef enum {
 	TK_IDENT,
@@ -14,7 +16,6 @@ typedef enum {
 	TK_EOF,
 } TokenKind;
 
-typedef struct Type Type;
 typedef struct Token Token;
 struct Token {
 	TokenKind kind;
@@ -63,28 +64,29 @@ struct Obj {
 };
 
 typedef enum {
-	ND_ADD,			// 0	+
-	ND_SUB,			// 1	-
-	ND_MUL,			// 2	*
-	ND_DIV,			// 3	/
-	ND_NEG,			// 4	unary -
-	ND_EQ,			// 5	==
-	ND_NE,			// 6	!=
-	ND_LT,			// 7	<
-	ND_LE,			// 8	<=
-	ND_ASSIGN,		// 9	=
-	ND_COMMA,		// 10	,
-	ND_ADDR,		// 11	unary &
-	ND_DEREF,		// 12	unary *
-	ND_RETURN,		// 13
-	ND_IF,			// 14
-	ND_FOR,			// 15
-	ND_BLOCK,		// 16
-	ND_FUNCALL,		// 17
-	ND_EXPR_STMT,		// 18
-	ND_STMT_EXPR,		// 19
-	ND_VAR,			// 20
-	ND_NUM,			// 21	integer/long/char
+	ND_ADD,			// +
+	ND_SUB,			// -
+	ND_MUL,			// *
+	ND_DIV,			// /
+	ND_NEG,			// unary -
+	ND_EQ,			// ==
+	ND_NE,			// !=
+	ND_LT,			// <
+	ND_LE,			// <=
+	ND_ASSIGN,		// =
+	ND_COMMA,		// ,
+	ND_MEMBER,		// . (struct member access)
+	ND_ADDR,		// unary &
+	ND_DEREF,		// unary *
+	ND_RETURN,		//
+	ND_IF,			//
+	ND_FOR,			//
+	ND_BLOCK,		//
+	ND_FUNCALL,		//
+	ND_EXPR_STMT,		//
+	ND_STMT_EXPR,		//
+	ND_VAR,			//
+	ND_NUM,			// integer/long/char
 } NodeKind;
 
 typedef struct LVar LVar;
@@ -111,6 +113,10 @@ struct Node {
 	Node *inc;	// FOR
 	Node *then;
 	Node *els;
+
+	// Struct member access
+	Member *member;
+
 	// function call	
 	char *funcname;
 	Node *args;
@@ -128,6 +134,7 @@ typedef enum {
 	TY_PTR,
 	TY_FUNC,
 	TY_ARRAY,
+	TY_STRUCT,
 } TypeKind;
 
 struct Type {
@@ -136,10 +143,22 @@ struct Type {
 	Type *base;
 	Token *name;
 	int array_len;
+
+	// Struct
+	Member *members;
+
 	// function
 	Type *return_ty;
 	Type *params;
 	Type *next;
+};
+
+// Struct member
+struct Member {
+	Member *next;
+	Type *ty;
+	Token *name;
+	int offset;
 };
 
 extern Type *ty_int;

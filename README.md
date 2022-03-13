@@ -42,7 +42,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 ## Features TODO
 - [x] .file/.loc
 - [x] comma operator
-- [ ] struct
+- [x] struct
 - [ ] -> operator
 - [ ] union
 
