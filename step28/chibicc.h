@@ -140,6 +140,7 @@ typedef enum {
 struct Type {
 	TypeKind kind;
 	int size;		// sizeof() value
+	int align;		// alignment
 	Type *base;
 	Token *name;
 	int array_len;
@@ -173,5 +174,6 @@ Type *array_of(Type *base, int size);
 void add_type(Node *node);
 
 char *codegen(Obj *prog, char *input_file);
+int align_to(int n, int align);
 
 #endif/*__9CC_H__*/
