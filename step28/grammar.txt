@@ -8,7 +8,7 @@ param          = declspec declarator
 declaration    = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
 declarator     = "*"* ident type-suffix
 declspec       = "int" | "long" | "char" | struct-decl
-struct-decl    = "{" struct-members
+struct-decl    = ident? "{" struct-members
 struct-members = (declspec declarator ("," declarator)* ";")*
 stmt           = "return" expr ";"
     | "if" "(" expr ")" stmt ("else" stmt)?
