@@ -24,7 +24,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] code generator (.s)
 - [ ] assembler (.o)
 - [ ] linker (.elf)
-## Features done
+## Compiler features
 - [x] compile integer into executable that exits with it
 - [x] +,-,*,/,() operators
 - [x] if/for/while
@@ -39,12 +39,19 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] Quine support
 - [x] octal/hex in strings
 - [x] block scope (local vars shadowing)
-## Features TODO
 - [x] .file/.loc
 - [x] comma operator
 - [x] struct
-- [ ] -> operator
+- [x] -> operator
 - [ ] union
+- [ ] function decl
+- [ ] typedef
+- [ ] enum
+- [ ] break/continue/switch
+- [ ] do while
+- [ ] variadic function
+...
+- [ ] self-host ?
 
 # Old notes
 *Note: initially I planned to code it in vlang (which would have made it NOT self-hosted ofc), but the clarity of the actual C code samples of the book, made me change my mind :-)*
