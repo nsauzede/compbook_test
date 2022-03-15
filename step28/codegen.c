@@ -13,7 +13,9 @@ static FILE *assembly_file = 0;
 #define PRINTF(...) do{fprintf(assembly_file,__VA_ARGS__);}while(0)
 
 static Obj *current_fn;
-static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+static char *argreg8[] = {"%dil", "%sil", "%dl", "%cl", "%r8b", "%r9b"};
+static char *argreg32[] = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
+static char *argreg64[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 static int depth;
 
 static void gen_expr(Node *node);
@@ -84,7 +86,7 @@ if (node->ty->kind == TY_ARRAY || node->ty->kind == TY_STRUCT || node->ty->kind 
 		PRINTF("\tmovsxd (%%rax), %%rax\n");
 		break;
 	case 1:
-		PRINTF("\tmovsbl (%%rax), %%eax\n");
+		PRINTF("\tmovsbq (%%rax), %%rax\n");
 		break;
 	default:
 		error_tok(node->tok, "unsupported load size %d", node->ty->size);
@@ -161,7 +163,7 @@ static void gen_expr(Node *node) {
 				nargs++;
 			}
 			for (int i = nargs - 1; i >= 0; i--) {
-				pop(argreg[i]);
+				pop(argreg64[i]);
 			}
 			// Following RSP 16-byte adjustment is important to respect x64 ABI
 			// PRINTF("\tand rsp, 0xfffffffffffffff0\n");
@@ -366,6 +368,24 @@ static void emit_data(Obj *prog) {
 	}
 }
 
+static void store_gp(int r, int offset, int sz) {
+	switch (sz) {
+	case 8:
+		PRINTF("\tmov %s, %d(%%rbp)\n", argreg64[r], offset);
+		break;
+	case 4:
+		PRINTF("\tmov %s, %d(%%rbp)\n", argreg32[r], offset);
+		break;
+	case 1:
+		PRINTF("\tmov %s, %d(%%rbp)\n", argreg8[r], offset);
+		break;
+	default:
+		fprintf(stderr, "unsupported passed-by-register arg size %d\n", sz);
+		exit(1);
+	}
+//	unreachable();
+}
+
 static void emit_text(Obj *prog) {
 	for (Obj *obj = prog; obj; obj = obj->next) {
 		if (!obj->is_function) {
@@ -382,21 +402,7 @@ static void emit_text(Obj *prog) {
 		// save passed-by-registers args to the stack
 		int i = 0;
 		for (Obj *var = obj->params; var; var = var->next) {
-			PRINTF("\tmov %s, %%rax\n", argreg[i++]);
-			switch (var->ty->size) {
-			case 8:
-				PRINTF("\tmov %%rax, %d(%%rbp)\n", var->offset);
-				break;
-			case 4:
-				PRINTF("\tmov %%eax, %d(%%rbp)\n", var->offset);
-				break;
-			case 1:
-				PRINTF("\tmov %%al, %d(%%rbp)\n", var->offset);
-				break;
-			default:
-				fprintf(stderr, "unsupported passed-by-register arg size %d\n", var->ty->size);
-				exit(1);
-			}
+			store_gp(i++, var->offset, var->ty->size);
 		}
 		// emit code
 		gen_stmt(obj->body);

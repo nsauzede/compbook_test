@@ -44,6 +44,9 @@ Token *tokenize_file(char *input_file);
 
 Token *preprocess(Token *tok);
 
+#define unreachable() \
+	error("internal error at %s:%d", __FILE__, __LINE__)
+
 typedef struct Obj Obj;
 struct Obj {
 	Obj *next;
