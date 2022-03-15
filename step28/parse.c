@@ -277,6 +277,8 @@ static void push_tag_scope(Token *tok, Type *ty) {
 static Type *declspec(Token **rest, Token *tok) {
 	if (consume(rest, tok, "char"))
 		return ty_char;
+	if (consume(rest, tok, "short"))
+		return ty_short;
 	if (consume(rest, tok, "int"))
 		return ty_int;
 	if (consume(rest, tok, "long"))
@@ -683,8 +685,8 @@ static Node *expr_stmt(Token **rest, Token *tok) {
 }
 
 static bool is_typename(Token *tok) {
-	return equal(tok, "char") || equal(tok, "int") || equal(tok, "long") || equal(tok, "struct") ||
-		equal(tok, "union");
+	return equal(tok, "char") || equal(tok, "short") || equal(tok, "int") || equal(tok, "long") ||
+		equal(tok, "struct") || equal(tok, "union");
 }
 
 static Node *compound_stmt(Token **rest, Token *tok) {

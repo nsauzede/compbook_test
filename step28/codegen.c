@@ -14,6 +14,7 @@ static FILE *assembly_file = 0;
 
 static Obj *current_fn;
 static char *argreg8[] = {"%dil", "%sil", "%dl", "%cl", "%r8b", "%r9b"};
+static char *argreg16[] = {"%di", "%si", "%dx", "%cx", "%r8w", "%r9w"};
 static char *argreg32[] = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
 static char *argreg64[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 static int depth;
@@ -27,13 +28,13 @@ static int count() {
 }
 
 static void push(void) {
-  PRINTF("\tpush %%rax\n");
-  depth++;
+	PRINTF("\tpush %%rax\n");
+	depth++;
 }
-  
+
 static void pop(char *arg) {
-  PRINTF("\tpop %s\n", arg);
-  depth--;
+	PRINTF("\tpop %s\n", arg);
+	depth--;
 }
 
 int align_to(int n, int align) {
@@ -79,14 +80,17 @@ if (node->ty->kind == TY_ARRAY || node->ty->kind == TY_STRUCT || node->ty->kind 
     return;
   }
 	switch (node->ty->size) {
-	case 8:
-		PRINTF("\tmov (%%rax), %%rax\n");
+	case 1:
+		PRINTF("\tmovsbq (%%rax), %%rax\n");
+		break;
+	case 2:
+		PRINTF("\tmovswq (%%rax), %%rax\n");
 		break;
 	case 4:
 		PRINTF("\tmovsxd (%%rax), %%rax\n");
 		break;
-	case 1:
-		PRINTF("\tmovsbq (%%rax), %%rax\n");
+	case 8:
+		PRINTF("\tmov (%%rax), %%rax\n");
 		break;
 	default:
 		error_tok(node->tok, "unsupported load size %d", node->ty->size);
@@ -104,14 +108,17 @@ static void store(Node *node) {
 		return;
 	}
 	switch (node->ty->size) {
-	case 8:
-		PRINTF("\tmov %%rax, (%%rdi)\n");
+	case 1:
+		PRINTF("\tmov %%al, (%%rdi)\n");
+		break;
+	case 2:
+		PRINTF("\tmov %%ax, (%%rdi)\n");
 		break;
 	case 4:
 		PRINTF("\tmov %%eax, (%%rdi)\n");
 		break;
-	case 1:
-		PRINTF("\tmov %%al, (%%rdi)\n");
+	case 8:
+		PRINTF("\tmov %%rax, (%%rdi)\n");
 		break;
 	default:
 		error_tok(node->tok, "unsupported store size %d", node->ty->size);
@@ -370,20 +377,21 @@ static void emit_data(Obj *prog) {
 
 static void store_gp(int r, int offset, int sz) {
 	switch (sz) {
-	case 8:
-		PRINTF("\tmov %s, %d(%%rbp)\n", argreg64[r], offset);
+	case 1:
+		PRINTF("\tmov %s, %d(%%rbp)\n", argreg8[r], offset);
+		break;
+	case 2:
+		PRINTF("\tmov %s, %d(%%rbp)\n", argreg16[r], offset);
 		break;
 	case 4:
 		PRINTF("\tmov %s, %d(%%rbp)\n", argreg32[r], offset);
 		break;
-	case 1:
-		PRINTF("\tmov %s, %d(%%rbp)\n", argreg8[r], offset);
+	case 8:
+		PRINTF("\tmov %s, %d(%%rbp)\n", argreg64[r], offset);
 		break;
 	default:
-		fprintf(stderr, "unsupported passed-by-register arg size %d\n", sz);
-		exit(1);
+		unreachable();
 	}
-//	unreachable();
 }
 
 static void emit_text(Obj *prog) {
