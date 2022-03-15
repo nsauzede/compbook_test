@@ -1,33 +1,35 @@
-program        = (function-definition | global-variable)*
-function       = declspec declarator
-type-suffix    = "(" func-params
+program           = (function-definition | global-variable)*
+function          = declspec declarator
+type-suffix       = "(" func-params
     | "[" num "]" type-suffix
     | epsilon
-func-params    = (param ("," param)*)? ")"
-param          = declspec declarator
-declaration    = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
-declarator     = "*"* ident type-suffix
-declspec       = "int" | "long" | "char" | struct-decl
-struct-decl    = ident? "{" struct-members
-struct-members = (declspec declarator ("," declarator)* ";")*
-stmt           = "return" expr ";"
+func-params       = (param ("," param)*)? ")"
+param             = declspec declarator
+declaration       = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
+declarator        = "*"* ident type-suffix
+declspec          = "int" | "long" | "char" | struct-decl
+struct-decl       = struct-union-decl
+union-decl        = struct-union-decl
+struct-union-decl = ident? ("{" struct-members)?
+struct-members    = (declspec declarator ("," declarator)* ";")*
+stmt              = "return" expr ";"
     | "if" "(" expr ")" stmt ("else" stmt)?
     | "for" "(" expr-stmt expr? ";" expr? ")" stmt
     | "while" "(" expr ")" stmt
     | "{" compound-stmt
     | expr-stmt
-compound-stmt  = (declaration | stmt)* "}"
-expr-stmt      = expr? ";"
-expr           = assign ("," expr)?
-assign         = equality ("=" assign)?
-equality       = relational ("==" relational | "!=" relational)*
-relational     = add ("<" add | "<=" add | ">" add | ">=" add)*
-add            = mul ("+" mul | "-" mul)*
-mul            = unary ("*" unary | "/" unary)*
-unary          = ("+" | "-" | "*" | "&") unary | postfix
-postfix        = primary ("[" expr "]" | "." ident | "->" ident)*
-funcall        = ident "(" (assign ("," assign)*)? ")"
-primary        = "(" "{" stmt+ "}" ")"
+compound-stmt     = (declaration | stmt)* "}"
+expr-stmt         = expr? ";"
+expr              = assign ("," expr)?
+assign            = equality ("=" assign)?
+equality          = relational ("==" relational | "!=" relational)*
+relational        = add ("<" add | "<=" add | ">" add | ">=" add)*
+add               = mul ("+" mul | "-" mul)*
+mul               = unary ("*" unary | "/" unary)*
+unary             = ("+" | "-" | "*" | "&") unary | postfix
+postfix           = primary ("[" expr "]" | "." ident | "->" ident)*
+funcall           = ident "(" (assign ("," assign)*)? ")"
+primary           = "(" "{" stmt+ "}" ")"
     | "(" expr ")"
     | "sizeof" unary
     | ident func-args?

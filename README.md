@@ -43,14 +43,14 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] comma operator
 - [x] struct
 - [x] -> operator
-- [ ] union
+- [x] union
 - [ ] function decl
 - [ ] typedef
 - [ ] enum
 - [ ] break/continue/switch
 - [ ] do while
 - [ ] variadic function
-...
+- [ ] ...
 - [ ] self-host ?
 
 # Old notes
