@@ -67,7 +67,7 @@ static void gen_addr(Node *node) {
 
 // Load a value from where %rax is pointing to.
 static void load(Node *node) {
-if (node->ty->kind == TY_ARRAY) {
+if (node->ty->kind == TY_ARRAY || node->ty->kind == TY_STRUCT || node->ty->kind == TY_UNION) {
     // If it is an array, do not attempt to load a value to the
     // register because in general we can't load an entire array to a
     // register. As a result, the result of an evaluation of an array
@@ -94,6 +94,13 @@ if (node->ty->kind == TY_ARRAY) {
 // Store %rax to an address that the stack top is pointing to.
 static void store(Node *node) {
 	pop("%rdi");
+	if (node->ty->kind == TY_STRUCT || node->ty->kind == TY_UNION) {
+		for (int i = 0; i < node->ty->size; i++) {
+			PRINTF("\tmov %d(%%rax), %%r8b\n", i);
+			PRINTF("\tmov %%r8b, %d(%%rdi)\n", i);
+		}
+		return;
+	}
 	switch (node->ty->size) {
 	case 8:
 		PRINTF("\tmov %%rax, (%%rdi)\n");
