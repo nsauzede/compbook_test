@@ -2,6 +2,7 @@
 #define __9CC_H__
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct Type Type;
 typedef struct Node Node;
@@ -20,7 +21,7 @@ typedef struct Token Token;
 struct Token {
 	TokenKind kind;
 	Token *next;
-	long val;
+	int64_t val;
 	char *loc;
 	int len;
 	Type *ty;	// used if TK_STR
@@ -125,15 +126,15 @@ struct Node {
 	Node *args;
 	
 	Obj *var;	// VAR
-	long val;	// NUM
+	int64_t val;	// NUM
 };
 
 Obj *parse(Token *tok);
 
 typedef enum {
+	TY_CHAR,
 	TY_INT,
 	TY_LONG,
-	TY_CHAR,
 	TY_PTR,
 	TY_FUNC,
 	TY_ARRAY,
@@ -166,9 +167,9 @@ struct Member {
 	int offset;
 };
 
+extern Type *ty_char;
 extern Type *ty_int;
 extern Type *ty_long;
-extern Type *ty_char;
 
 bool is_integer(Type *ty);
 Type *pointer_to(Type *base);

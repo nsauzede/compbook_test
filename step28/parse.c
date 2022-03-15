@@ -178,7 +178,7 @@ static Node *new_unary(NodeKind kind, Node *expr, Token *tok) {
 	return node;
 }
 
-static Node *new_num(long val, Token *tok) {
+static Node *new_num(int64_t val, Token *tok) {
 	Node *node = new_node(ND_NUM, tok);
 	node->val = val;
 	// if (do_print_ast)
@@ -277,10 +277,10 @@ static void push_tag_scope(Token *tok, Type *ty) {
 static Type *declspec(Token **rest, Token *tok) {
 	if (consume(rest, tok, "char"))
 		return ty_char;
-	if (consume(rest, tok, "long"))
-		return ty_long;
 	if (consume(rest, tok, "int"))
 		return ty_int;
+	if (consume(rest, tok, "long"))
+		return ty_long;
 	if (consume(rest, tok, "struct"))
 		return struct_decl(rest, tok->next);
 	if (consume(rest, tok, "union"))
@@ -683,7 +683,7 @@ static Node *expr_stmt(Token **rest, Token *tok) {
 }
 
 static bool is_typename(Token *tok) {
-	return equal(tok, "int") || equal(tok, "long") || equal(tok, "char") || equal(tok, "struct") ||
+	return equal(tok, "char") || equal(tok, "int") || equal(tok, "long") || equal(tok, "struct") ||
 		equal(tok, "union");
 }
 
