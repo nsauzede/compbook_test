@@ -326,6 +326,15 @@ static Type *declarator(Token **rest, Token *tok, Type *ty) {
 		ty = pointer_to(ty);
 	}
 
+	if (equal(tok, "(")) {
+		Token *start = tok;
+		Type dummy = {};
+		declarator(&tok, start->next, &dummy);
+		tok = skip(tok, ")");
+		ty = type_suffix(rest, tok, ty);
+		return declarator(&tok, start->next, ty);
+	}
+
 	if (tok->kind != TK_IDENT) {
 		error_tok(tok, "expected a variable name");
 	}

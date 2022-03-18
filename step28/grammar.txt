@@ -6,7 +6,7 @@ type-suffix       = "(" func-params
 func-params       = (param ("," param)*)? ")"
 param             = declspec declarator
 declaration       = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
-declarator        = "*"* ident type-suffix
+declarator        = "*"* ("(" ident ")" | "(" declarator ")" | ident) type-suffix
 declspec          = "char" | "short" | "int" | "long" | struct-decl
 struct-decl       = struct-union-decl
 union-decl        = struct-union-decl

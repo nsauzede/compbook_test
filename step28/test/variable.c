@@ -53,6 +53,10 @@ int main() {
   ASSERT(8, ({ long x; sizeof(x); }));
   ASSERT(2, ({ short x; sizeof(x); }));
 
+  ASSERT(24, ({ char *x[3]; sizeof(x); }));
+  ASSERT(8, ({ char (*x)[3]; sizeof(x); }));
+//  ASSERT(1, ({ char (x); sizeof(x); }));
+
   printf("OK\n");
   return 0;
 }
