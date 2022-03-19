@@ -50,6 +50,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [ ] break/continue/switch
 - [ ] do while
 - [ ] variadic function
+- [ ] static, bool
 - [ ] ...
 - [ ] self-host ?
 
