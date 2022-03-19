@@ -396,7 +396,7 @@ static void store_gp(int r, int offset, int sz) {
 
 static void emit_text(Obj *prog) {
 	for (Obj *obj = prog; obj; obj = obj->next) {
-		if (!obj->is_function) {
+		if (!obj->is_function || !obj->is_definition) {
 			continue;
 		}
 		PRINTF("\t.globl %s\n", obj->name);
