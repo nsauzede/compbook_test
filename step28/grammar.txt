@@ -5,6 +5,8 @@ type-suffix       = "(" func-params
     | epsilon
 func-params       = (param ("," param)*)? ")"
 param             = declspec declarator
+type-name         = declspec abstract-declarator
+abstract-declarator = "*"* ("(" abstract-declarator ")")? type-suffix
 declaration       = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
 declarator        = "*"* ("(" ident ")" | "(" declarator ")" | ident) type-suffix
 declspec          = ("void" | "char" | "short" | "int" | "long"
@@ -33,6 +35,7 @@ postfix           = primary ("[" expr "]" | "." ident | "->" ident)*
 funcall           = ident "(" (assign ("," assign)*)? ")"
 primary           = "(" "{" stmt+ "}" ")"
     | "(" expr ")"
+    | "sizeof" "(" type-name ")"
     | "sizeof" unary
     | ident func-args?
     | num
