@@ -274,22 +274,80 @@ static void push_tag_scope(Token *tok, Type *ty) {
 	scope->tags = sc;
 }
 
+static bool is_typename(Token *tok) {
+	static char *kw[] = {
+		"void", "char", "short", "int", "long", "struct", "union",
+	};
+	for (int i = 0; i < sizeof(kw) / sizeof(kw[0]); i++) {
+		if (equal(tok, kw[i])) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Order of typenames doesn't matter.
+// However some combos invalid (eg: `char int`)
 static Type *declspec(Token **rest, Token *tok) {
-	if (consume(rest, tok, "void"))
-		return ty_void;
-	if (consume(rest, tok, "char"))
-		return ty_char;
-	if (consume(rest, tok, "short"))
-		return ty_short;
-	if (consume(rest, tok, "int"))
-		return ty_int;
-	if (consume(rest, tok, "long"))
-		return ty_long;
-	if (consume(rest, tok, "struct"))
-		return struct_decl(rest, tok->next);
-	if (consume(rest, tok, "union"))
-		return union_decl(rest, tok->next);
-	error_tok(tok, "Typename expected");
+	enum {
+		VOID  = 1 << 0,
+		CHAR  = 1 << 2,
+		SHORT = 1 << 4,
+		INT   = 1 << 6,
+		LONG  = 1 << 8,
+		OTHER = 1 << 10,
+	};
+	Type *ty = ty_int;
+	int counter = 0;
+	while (is_typename(tok)) {
+		// user-defined types
+		if (equal(tok, "struct") || equal(tok, "union")) {
+			if (equal(tok, "struct")) {
+				ty = struct_decl(&tok, tok->next);
+			} else {
+				ty = union_decl(&tok, tok->next);
+			}
+			counter += OTHER;
+			continue;
+		}
+		// built-in types
+		if (equal(tok, "void"))
+			counter += VOID;
+		else if (equal(tok, "char"))
+			counter += CHAR;
+		else if (equal(tok, "short"))
+			counter += SHORT;
+		else if (equal(tok, "int"))
+			counter += INT;
+		else if (equal(tok, "long"))
+			counter += LONG;
+		else
+			unreachable();
+		switch (counter) {
+			case VOID:
+				ty = ty_void;
+				break;
+			case CHAR:
+				ty = ty_char;
+				break;
+			case SHORT:
+			case SHORT + INT:
+				ty = ty_short;
+				break;
+			case INT:
+				ty = ty_int;
+				break;
+			case LONG:
+			case LONG + INT:
+				ty = ty_long;
+				break;
+			default:
+				error_tok(tok, "Invalid type");
+		}
+		tok = tok->next;
+	}
+	*rest = tok;
+	return ty;
 }
 
 static Type *func_params(Token **rest, Token *tok, Type *ty) {
@@ -693,18 +751,6 @@ static Node *expr_stmt(Token **rest, Token *tok) {
   node->lhs = expr(&tok, tok);
   *rest = skip(tok, ";");
   return node;
-}
-
-static bool is_typename(Token *tok) {
-	static char *kw[] = {
-		"void", "char", "short", "int", "long", "struct", "union",
-	};
-	for (int i = 0; i < sizeof(kw) / sizeof(kw[0]); i++) {
-		if (equal(tok, kw[i])) {
-			return true;
-		}
-	}
-	return false;
 }
 
 static Node *compound_stmt(Token **rest, Token *tok) {
