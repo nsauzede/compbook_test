@@ -1,4 +1,4 @@
-program           = (function-definition | global-variable)*
+program           = (typedef | function-definition | global-variable)*
 function          = declspec declarator
 type-suffix       = "(" func-params
     | "[" num "]" type-suffix
@@ -7,7 +7,9 @@ func-params       = (param ("," param)*)? ")"
 param             = declspec declarator
 declaration       = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
 declarator        = "*"* ("(" ident ")" | "(" declarator ")" | ident) type-suffix
-declspec          = ("void" | "char" | "short" | "int" | "long" | struct-decl | union-decl)+
+declspec          = ("void" | "char" | "short" | "int" | "long"
+    | "typedef"
+    | struct-decl | union-decl | typedef-name)+
 struct-decl       = struct-union-decl
 union-decl        = struct-union-decl
 struct-union-decl = ident? ("{" struct-members)?
@@ -18,7 +20,7 @@ stmt              = "return" expr ";"
     | "while" "(" expr ")" stmt
     | "{" compound-stmt
     | expr-stmt
-compound-stmt     = (declaration | stmt)* "}"
+compound-stmt     = (typedef | declaration | stmt)* "}"
 expr-stmt         = expr? ";"
 expr              = assign ("," expr)?
 assign            = equality ("=" assign)?

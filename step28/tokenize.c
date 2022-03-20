@@ -65,9 +65,23 @@ static void verror_at(char *loc, int len, char *fmt, va_list ap) {
 		if (p) {
 			slen = p - str;
 		}
+#if 0
 		fprintf(stderr, "%.*s\n", slen, str);
+#else
+		fprintf(stderr, "%.*s", pos, str);
+		fprintf(stderr, "%s%.*s%s", RED(), len, str+pos, NRM());
+		fprintf(stderr, "%.*s\n", slen-pos-len, str+pos+len);
+#endif
 		fprintf(stderr, "%*s", pos, "");
+#if 0
 		fprintf(stderr, "^ len=%d\n", len);
+#else
+		fprintf(stderr, "^");
+		for (int i = 1; i < len; i++) {
+			fprintf(stderr, "~");
+		}
+		fprintf(stderr, "\n");
+#endif
 	}
 	exit(1);
 }
@@ -191,7 +205,7 @@ static bool is_keyword(Token *tok) {
   static char *kw[] = {
     "return", "if", "else", "for", "while",
     "void", "char", "short", "int", "long",
-    "sizeof", "struct", "union",
+    "sizeof", "struct", "union", "typedef",
   };
 
   for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++)
