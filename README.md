@@ -46,7 +46,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] union
 - [x] short/long, function decl
 - [x] void
-- [x] typedef
+- [x] typedef, type cast
 - [ ] enum
 - [ ] break/continue/switch
 - [ ] do while

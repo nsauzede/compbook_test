@@ -530,15 +530,38 @@ static Node *funcall(Token **rest, Token *tok) {
 	node->args = head.next;
 	return node;
 }
+
+static Node *new_cast(Node *expr, Type *ty) {
+	add_type(expr);
+	Node *node = calloc(1, sizeof(Node));
+	node->kind = ND_CAST;
+	node->tok = expr->tok;
+	node->lhs = expr;
+	node->ty = copy_type(ty);
+	return node;
+}
+
+static Node *cast(Node **rest, Token *tok) {
+	if (equal(tok, "(") && is_typename(tok->next)) {
+		Node *start = tok;
+		Type *ty = typename(&tok, tok->next);
+		tok = skip(tok, ")");
+		Node *node = new_cast(cast(rest, tok), ty);
+		node->tok = start;
+		return node;
+	}
+	return unary(rest, tok);
+}
+
 static Node *unary(Token **rest, Token *tok) {
 	if (equal(tok, "+")) {
-		return unary(rest, tok->next);
+		return cast(rest, tok->next);
 	} else if (equal(tok, "-")) {
-		return new_unary(ND_NEG, unary(rest, tok->next), tok);
+		return new_unary(ND_NEG, cast(rest, tok->next), tok);
 	} else if (equal(tok, "&")) {
-		return new_unary(ND_ADDR, unary(rest, tok->next), tok);
+		return new_unary(ND_ADDR, cast(rest, tok->next), tok);
 	} else if (equal(tok, "*")) {
-		return new_unary(ND_DEREF, unary(rest, tok->next), tok);
+		return new_unary(ND_DEREF, cast(rest, tok->next), tok);
 	}
 	return postfix(rest, tok);
 }
@@ -665,13 +688,13 @@ static Node *postfix(Token **rest, Token *tok) {
 }
 
 static Node *mul(Token **rest, Token *tok) {
-	Node *node = unary(&tok, tok);
+	Node *node = cast(&tok, tok);
 	for (;;) {
 		Token *start = tok;
 		if (equal(tok, "*")) {
-			node = new_binary(ND_MUL, node, unary(&tok, tok->next), start);
+			node = new_binary(ND_MUL, node, cast(&tok, tok->next), start);
 		} else if (equal(tok, "/")) {
-			node = new_binary(ND_DIV, node, unary(&tok, tok->next), start);
+			node = new_binary(ND_DIV, node, cast(&tok, tok->next), start);
 		} else {
 			*rest = tok;
 			return node;

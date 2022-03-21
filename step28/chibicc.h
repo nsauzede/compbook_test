@@ -92,6 +92,7 @@ typedef enum {
 	ND_STMT_EXPR,		//
 	ND_VAR,			//
 	ND_NUM,			// integer/long/char
+	ND_CAST,		// Type cast
 } NodeKind;
 
 typedef struct LVar LVar;
