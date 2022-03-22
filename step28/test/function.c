@@ -42,6 +42,11 @@ int sub_short(short a, short b, short c) {
 int g1;
 int *g1_ptr() { return &g1; }
 char int_to_char(int x) { return x; }
+
+int div_long(long a, long b) {
+  return a / b;
+}
+
 int main() {
   ASSERT(3, ret3());
   ASSERT(8, add2(3, 5));
@@ -61,6 +66,7 @@ int main() {
   g1 = 3;
   ASSERT(3, *g1_ptr());
   ASSERT(5, int_to_char(261));
+  ASSERT(-5, div_long(-10, 2));
 
   printf("OK\n");
   return 0;

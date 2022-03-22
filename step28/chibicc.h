@@ -125,6 +125,7 @@ struct Node {
 
 	// function call	
 	char *funcname;
+	Type *func_ty;
 	Node *args;
 	
 	Obj *var;	// VAR
