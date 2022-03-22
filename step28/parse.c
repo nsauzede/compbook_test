@@ -47,6 +47,9 @@ static Obj *globals;
 
 static Scope *scope = &(Scope){};
 
+// Points to the function object the parser is currently parsing.
+static Obj *current_fn;
+
 static Node *new_add(Node *lhs, Node *rhs, Token *tok);
 static Node *compound_stmt(Token **rest, Token *tok);
 static Node *stmt(Token **rest, Token *tok);
@@ -919,8 +922,10 @@ static Node *declaration(Token **rest, Token *tok, Type *basety) {
 static Node *stmt(Token **rest, Token *tok) {
 	if (equal(tok, "return")) {
 		Node *node = new_node(ND_RETURN, tok);
-		node->lhs = expr(&tok, tok->next);
+		Node *exp = expr(&tok, tok->next);
 		*rest = skip(tok, ";");
+		add_type(exp);
+		node->lhs = new_cast(exp, current_fn->ty->return_ty);
 		return node;
 	} else if (equal(tok, "if")) {
 		Node *node = new_node(ND_IF, tok);
@@ -970,24 +975,25 @@ static void create_param_lvars(Type *param) {
 }
 
 static Token *function(Token *tok, Type *basety) {
-  Type *ty = declarator(&tok, tok, basety);
+	Type *ty = declarator(&tok, tok, basety);
 
-  Obj *fn = new_gvar(get_ident(ty->name), ty);
-  fn->is_function = true;
+	Obj *fn = new_gvar(get_ident(ty->name), ty);
+	fn->is_function = true;
 	fn->is_definition = !consume(&tok, tok, ";");
 	if (!fn->is_definition)
 		return tok;
 
-  locals = NULL;
+	current_fn = fn;
+	locals = NULL;
 	enter_scope();
-  create_param_lvars(ty->params);
-  fn->params = locals;
+	create_param_lvars(ty->params);
+	fn->params = locals;
 
-  tok = skip(tok, "{");
-  fn->body = compound_stmt(&tok, tok);
-  fn->locals = locals;
+	tok = skip(tok, "{");
+	fn->body = compound_stmt(&tok, tok);
+	fn->locals = locals;
 	leave_scope();
-  return tok;
+	return tok;
 }
 
 static Token *global_variable(Token *tok, Type *basety) {
