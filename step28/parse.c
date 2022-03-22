@@ -523,6 +523,13 @@ static Token *parse_typedef(Token *tok, Type *basety) {
 static Node *funcall(Token **rest, Token *tok) {
 	Token *start = tok;
 	tok = tok->next->next;
+
+	VarScope *sc = find_var(start);
+	if (!sc)
+		error_tok(start, "Implicit declaration of a function");
+	if (!sc->var || sc->var->ty->kind != TY_FUNC)
+		error_tok(start, "Not a function");
+	Type *ty = sc->var->ty->return_ty;
 	Node head = {};
 	Node *cur = &head;
 	while (!equal(tok, ")")) {
@@ -530,10 +537,12 @@ static Node *funcall(Token **rest, Token *tok) {
 			tok = skip(tok, ",");
 		}
 		cur = cur->next = assign(&tok, tok);
+		add_type(cur);
 	}
 	*rest = skip(tok, ")");
 	Node *node = new_node(ND_FUNCALL, start);
 	node->funcname = strndup(start->loc, start->len);
+	node->ty = ty;
 	node->args = head.next;
 	return node;
 }

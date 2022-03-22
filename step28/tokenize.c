@@ -47,6 +47,10 @@ static void add_line_numbers(Token *tok) {
 	} while (*p++);
 }
 
+// Print error message in the following format:
+// parse.c:529:funcall:test/quine.i:36:80: error: Implicit declaration of a function
+// int main(){char*s="int main(){char*s=%c%s%c;printf(s,34,s,34,10);return 0;}%c";printf(s,34,s,34,10);return 0;}
+//                                                                                ^~~~~~
 static void verror_at(char *loc, int len, char *fmt, va_list ap) {
 	int pos = 0;
 	char *str = 0;
@@ -83,25 +87,27 @@ static void verror_at(char *loc, int len, char *fmt, va_list ap) {
 		fprintf(stderr, "\n");
 #endif
 	}
-	exit(1);
 }
 
 void error(char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	verror_at(0, 0, fmt, ap);
+	exit(1);
 }
 
 void error_at(char *loc, char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	verror_at(loc, 0, fmt, ap);
+	exit(1);
 }
 
 void _error_tok(Token *tok, char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	verror_at(tok->loc, tok->len, fmt, ap);
+	exit(1);
 }
 
 void print(char *s) {
