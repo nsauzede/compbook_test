@@ -79,12 +79,17 @@ if (node->ty->kind == TY_ARRAY || node->ty->kind == TY_STRUCT || node->ty->kind 
     // the first element of the array in C" occurs.
     return;
   }
+	// when we load a char/short to a register, we always
+	// extend them an int, so we can assume lower-half of
+	// a register always contains valid val. Upper-half of
+	// a register for char/short/int may contain garbage.
+	// Loading a long to a register fills it completely.
 	switch (node->ty->size) {
 	case 1:
-		PRINTF("\tmovsbq (%%rax), %%rax\n");
+		PRINTF("\tmovsbl (%%rax), %%eax\n");
 		break;
 	case 2:
-		PRINTF("\tmovswq (%%rax), %%rax\n");
+		PRINTF("\tmovswl (%%rax), %%eax\n");
 		break;
 	case 4:
 		PRINTF("\tmovsxd (%%rax), %%rax\n");
@@ -128,7 +133,7 @@ static void store(Node *node) {
 enum { I8, I16, I32, I64 };
 static char i32i8[] = "movsbl %al, %eax";
 static char i32i16[] = "movswl %ax, %eax";
-static char i32i64[] = "movsxd eax, %rax";
+static char i32i64[] = "movsxd %eax, %rax";
 static char *cast_table[][10] = {
 	{NULL,  NULL,   NULL, i32i64}, // i8
 	{i32i8, NULL,   NULL, i32i64}, // i16

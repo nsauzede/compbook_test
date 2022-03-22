@@ -131,6 +131,7 @@ struct Node {
 	int64_t val;	// NUM
 };
 
+Node *new_cast(Node *expr, Type *ty);
 Obj *parse(Token *tok);
 
 typedef enum {
