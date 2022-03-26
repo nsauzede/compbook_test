@@ -351,75 +351,13 @@ static void emit_data(Obj *prog) {
 			int first = 1;
 			for (int i = 0; i < obj->ty->size; i++) {
 				unsigned char c = ((unsigned char *)obj->init_data)[i];
-				if (backslash) {
-					if (hex) {
-						if (isxdigit(c)) {
-							num <<= 4;
-							if (c <= '9') {
-								c -= '0';
-							} else {
-								c |= ' ';
-								c -= 'a';
-							}
-							num += c;
-							continue;
-						} else {
-							if (first) {
-								first = 0;
-							} else {
-								PRINTF(",");
-							}
-							PRINTF("0x%02x", num);
-						}
-					} else if (oct) {
-						if (c >= '0' && c <= '7' && count < 3) {
-							num <<= 3;
-							num += c - '0';
-							count++;
-							continue;
-						} else {
-							if (first) {
-								first = 0;
-							} else {
-								PRINTF(",");
-							}
-							PRINTF("0x%02x", num);
-						}
-					} else if (c == 'x') {
-						hex = 1;
-						continue;
-					} else if (c >= '0' && c <= '7') {
-						oct = 1;
-						num <<= 3;
-						num += c - '0';
-						count++;
-						continue;
-					} else {
-						c = c == 'a' ? '\a' :
-							c == 'b' ? '\b' :
-							c == 't' ? '\t' :
-							c == 'n' ? '\n' :
-							c == 'v' ? '\v' :
-							c == 'f' ? '\f' :
-							c == 'r' ? '\r' :
-							c == 'e' ? '\e' :
-							c;
-					}
-					backslash = 0;
-					hex = 0;
-					oct = 0;
-					count = 0;
-					num = 0;
-				} else if (c == '\\') {
-					backslash = 1;
-					continue;
-				}
 				if (first) {
 					first = 0;
 				} else {
 					PRINTF(",");
 				}
-				PRINTF("0x%02x", c);
+//				PRINTF("0x%02x", c);
+				PRINTF("%d", c);
 			}
 			PRINTF("\n");
 		} else {

@@ -24,7 +24,7 @@ test0: $(TARGET)
 
 check: $(TARGET)
 	echo 'int main(){return 123;}' > tmp.c.txt ; ./$(TARGET) -S -o tmp.s -x c tmp.c.txt
-	echo 'int printf();int main(){printf("Hello \"World\"\n");return 123;}' > tmp.c.txt ; ./$(TARGET) -S -o tmp.s -x c tmp.c.txt
+	echo 'int printf();int main(){printf("Hello \"World\"\\n");return 123;}' > tmp.c.txt ; ./$(TARGET) -S -o tmp.s -x c tmp.c.txt
 	$(CC) -o tmp tmp.s
 	./tmp ; echo $$?
 

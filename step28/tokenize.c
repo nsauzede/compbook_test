@@ -226,6 +226,100 @@ void convert_keywords(Token *tok) {
       t->kind = TK_KEYWORD;
 }
 
+static int read_escaped_char(char **new_pos, char *p) {
+	int num = *p;
+	switch (num) {
+		case 'n':num = '\n';p++;break;
+		case 'a':num = '\a';p++;break;
+		case 'b':num = '\b';p++;break;
+		case 't':num = '\t';p++;break;
+		case 'v':num = '\v';p++;break;
+		case 'f':num = '\f';p++;break;
+		case 'r':num = '\r';p++;break;
+		case 'e':num = '\e';p++;break;
+		case 'x':
+			p++;
+			num = 0;
+			while (isxdigit(*p)) {
+//	fprintf(stderr, "seen x=%d (%x) num=%d (%x)\n", *p, *p, num, num);
+				num <<= 4;
+				if (*p <= '9')
+					num += *p -'0';
+				else {
+					num += (*p | ' ') - 'a' + 10;
+				}
+				p++;
+			}
+			break;
+		case '0' ... '7': {
+			num = 0;
+			int count = 0;
+			do {
+				num <<= 3;
+				num += *p++ - '0';
+			} while (count++ < 2 && *p >= '0' && *p <= '7');
+			break;
+		}
+		default:
+			p++;
+			break;
+	}
+	*new_pos = p;
+	return num;
+}
+
+static char *string_literal_end(char *p) {
+	char *start = p;
+	for (; *p != '"'; p++) {
+		if (!*p || *p == '\n')
+			error_at(p, "non-terminated string");
+		if (*p == '\\')
+			p++;
+	}
+	return p;
+}
+
+static Token *read_string_literal(char *start) {
+//	fprintf(stderr, "FOUND STRING LITTERAL %c\n", *p);
+	char *end = string_literal_end(start + 1);
+	char *buf = calloc(1, end - start);
+	int len = 0;
+	for (char *p = start + 1; p < end;) {
+		if (*p == '\\')
+			buf[len] = read_escaped_char(&p, p + 1);
+		else
+			buf[len] = *p++;
+		len++;
+	}
+	Token *tok = new_token(TK_STR, start, end + 1);
+	tok->ty = array_of(ty_char, len + 1);
+	tok->str = buf;
+//	fprintf(stderr, "DONE\n");
+	return tok;
+}
+
+static Token *read_char_literal(char *p) {
+//	fprintf(stderr, "FOUND CHARACTER LITTERAL %c\n", *p);
+	char *q = p;
+	p++;
+//	fprintf(stderr, "c=%c\n", *p);
+	char c = 0;
+	if (*p == '\\') {
+		c = read_escaped_char(&p, p + 1);
+//		fprintf(stderr, "p=%c\n", *p);
+	} else if (*p) {
+//		fprintf(stderr, "c=%c\n", *p);
+		c = *p++;
+	}
+	if (*p!='\'') {
+		error_at(p, "non-terminated character literal");
+	}
+	p++;
+	Token *tok = new_token(TK_NUM, q, p);
+	tok->val = c;
+	return tok;
+}
+
 // tokenize the input string p and return its tokens
 static Token *tokenize_string(char *p) {
 	user_input = p;
@@ -233,10 +327,7 @@ static Token *tokenize_string(char *p) {
 	Token *cur = &head;
 //	fprintf(stderr, "input string=%s\n", p);
 	while (*p) {
-		if (isspace(*p)) {
-			p++;
-			continue;
-		}
+		// skip line comments
 		if (startswith(p, "//")) {
 			p += 2;
 			while (*p && *p != '\n') {
@@ -244,6 +335,7 @@ static Token *tokenize_string(char *p) {
 			}
 			continue;
 		}
+		// skip block comments
 		if (startswith(p, "/*")) {
 			char *q = strstr(p+2,"*/");
 			if (!q) {
@@ -252,35 +344,24 @@ static Token *tokenize_string(char *p) {
 			p = q+2;
 			continue;
 		}
-		if (startswith(p, "\"")) {
-//			fprintf(stderr, "FOUND STRING LITTERAL %c\n", *p);
-			char *q = p;
+		// skip whitespace characters
+		if (isspace(*p)) {
 			p++;
-			int esc = 0;
-			while (*p) {
-//				fprintf(stderr, "c=%c\n", *p);
-				if (!esc) {
-					if (*p == '"') {
-						break;
-					}
-					if (*p == '\\') {
-						esc = 1;
-					}
-				} else {
-					esc = 0;
-				}
-				p++;
-			}
-			if (!*p || *p!='"') {
-				error_at(q, "non-terminated string");
-			}
-			p++;
-			cur = cur->next = new_token(TK_STR, q, p);
-			cur->str = strndup(q + 1, p - q - 2);
-			cur->ty = array_of(ty_char, p - q - 1);
-//			fprintf(stderr, "DONE\n");
 			continue;
 		}
+		// string literal
+		if (*p == '"') {
+			cur = cur->next = read_string_literal(p);
+			p += cur->len;
+			continue;
+		}
+		// Character literal
+		if (*p == '\'') {
+			cur = cur->next = read_char_literal(p);
+			p += cur->len;
+			continue;
+		}
+		// numeric literal
 		if (isdigit(*p)) {
 			cur = cur->next = new_token(TK_NUM, p, p);
 			char *q = p;
@@ -288,6 +369,7 @@ static Token *tokenize_string(char *p) {
 			cur->len = p - q;
 			continue;
 		}
+		// identifier or keyword
 		if (is_ident1(*p)) {
 			char *start = p;
 			do {
@@ -296,6 +378,7 @@ static Token *tokenize_string(char *p) {
 			cur = cur->next = new_token(TK_IDENT, start, p);
 			continue;
 		}
+		// punctuators
 		int punct_len = read_punct(p);
 		if (punct_len) {
 			cur = cur->next = new_token(TK_PUNCT, p, p + punct_len);
