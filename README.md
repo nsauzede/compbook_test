@@ -47,11 +47,11 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] short/long, function decl
 - [x] void
 - [x] typedef, type cast
-- [ ] enum
+- [x] bool, enum
 - [ ] break/continue/switch
 - [ ] do while
 - [ ] variadic function
-- [ ] static, bool
+- [ ] static
 - [ ] ...
 - [ ] self-host ?
 

@@ -153,9 +153,22 @@ static int getTypeId(Type *ty) {
 	return I64;
 }
 
+static void cmp_zero(Type *ty) {
+	if (is_integer(ty) && ty->size <= 4)
+		PRINTF("\tcmp $0, %%eax\n");
+	else
+		PRINTF("\tcmp $0, %%rx\n");
+}
+
 static void cast(Type *from, Type *to) {
 	if (to->kind == TY_VOID)
 		return;
+	if (to->kind == TY_BOOL) {
+		cmp_zero(from);
+		PRINTF("\tsetne %%al\n");
+		PRINTF("\tmovzx %%al, %%eax\n");
+		return;
+	}
 	int t1 = getTypeId(from);
 	int t2 = getTypeId(to);
 	if (cast_table[t1][t2])
