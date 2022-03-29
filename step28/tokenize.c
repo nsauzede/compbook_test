@@ -322,6 +322,29 @@ static Token *read_char_literal(char *p) {
 	return tok;
 }
 
+static Token *read_int_literal(char *start) {
+	char *p = start;
+
+	int base = 10;
+	if (!strncasecmp(p, "0x", 2) && isalnum(p[2])) {
+		p += 2;
+		base = 16;
+	} else if (!strncasecmp(p, "0b", 2) && isalnum(p[2])) {
+		p += 2;
+		base = 2;
+	} else if (*p == '0') {
+		base = 8;
+	}
+
+	long val = strtoul(p, &p, base);
+	if (isalnum(*p))
+		error_at(p, "invalid digit");
+
+	Token *tok = new_token(TK_NUM, start, p);
+	tok->val = val;
+	return tok;
+}
+
 // tokenize the input string p and return its tokens
 static Token *tokenize_string(char *p) {
 	user_input = p;
@@ -365,10 +388,8 @@ static Token *tokenize_string(char *p) {
 		}
 		// numeric literal
 		if (isdigit(*p)) {
-			cur = cur->next = new_token(TK_NUM, p, p);
-			char *q = p;
-			cur->val = strtoul(p, &p, 10);
-			cur->len = p - q;
+			cur = cur->next = read_int_literal(p);
+			p += cur->len;
 			continue;
 		}
 		// identifier or keyword

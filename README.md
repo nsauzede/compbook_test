@@ -49,13 +49,14 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] bool, enum
 - [x] static funcs, loop variables
 - [x] assignment ops
-- [ ] hex/oct/bin literals
+- [x] hex/oct/bin literals
 - [ ] more unary/binary ops
 - [ ] incomplete types / array to pointer decay
 - [ ] goto/labels
 - [ ] break/continue/switch
 - [ ] do while
 - [ ] variadic function
+- [ ] signed/unsigned
 - [ ] ...
 - [ ] self-host ?
 
