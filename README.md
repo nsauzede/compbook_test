@@ -48,7 +48,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] typedef, type cast
 - [x] bool, enum
 - [x] static funcs, loop variables
-- [ ] assignment ops
+- [x] assignment ops
 - [ ] hex/oct/bin literals
 - [ ] mode unary/binary ops
 - [ ] incomplete types / array to pointer decay

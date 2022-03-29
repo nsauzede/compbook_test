@@ -29,7 +29,8 @@ stmt              = "return" expr ";"
 compound-stmt     = (typedef | declaration | stmt)* "}"
 expr-stmt         = expr? ";"
 expr              = assign ("," expr)?
-assign            = equality ("=" assign)?
+assign            = equality (assign-op assign)?
+assign-op         = "=" | "+=" | "-=" | "*=" | "/="
 equality          = relational ("==" relational | "!=" relational)*
 relational        = add ("<" add | "<=" add | ">" add | ">=" add)*
 add               = mul ("+" mul | "-" mul)*

@@ -900,11 +900,33 @@ static Node *equality(Token **rest, Token *tok) {
 	}
 }
 
+// convert `A op= B` to `tmp=&A, *tmp=*tmp op B`
+// where tmp is temporary pointer variable.
+static Node *to_assign(Node *binary) {
+	add_type(binary->lhs);
+	add_type(binary->rhs);
+	Token *tok = binary->tok;
+	Obj *var = new_lvar("", pointer_to(binary->lhs->ty));
+	Node *expr1 = new_binary(ND_ASSIGN, new_var_node(var, tok),
+		new_unary(ND_ADDR, binary->lhs, tok), tok);
+	Node *expr2 = new_binary(ND_ASSIGN, new_unary(ND_DEREF, new_var_node(var, tok), tok),
+		new_binary(binary->kind, new_unary(ND_DEREF, new_var_node(var, tok), tok), binary->rhs, tok), tok);
+	return new_binary(ND_COMMA, expr1, expr2, tok);
+}
+
 static Node *assign(Token **rest, Token *tok) {
 	Node *node = equality(&tok, tok);
 	if (equal(tok, "=")) {
 		// fprintf(stderr, "OUTPUT ASSIGN !!\n");
-		node = new_binary(ND_ASSIGN, node, assign(&tok, tok->next), tok);
+		return new_binary(ND_ASSIGN, node, assign(rest, tok->next), tok);
+	} else if (equal(tok, "+=")) {
+		return to_assign(new_add(node, assign(rest, tok->next), tok));
+	} else if (equal(tok, "-=")) {
+		return to_assign(new_sub(node, assign(rest, tok->next), tok));
+	} else if (equal(tok, "*=")) {
+		return to_assign(new_binary(ND_MUL, node, assign(rest, tok->next), tok));
+	} else if (equal(tok, "/=")) {
+		return to_assign(new_binary(ND_DIV, node, assign(rest, tok->next), tok));
 	}
 	*rest = tok;
 	return node;
