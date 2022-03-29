@@ -54,6 +54,7 @@ static Scope *scope = &(Scope){};
 static Obj *current_fn;
 
 static Node *new_add(Node *lhs, Node *rhs, Token *tok);
+static Node *new_sub(Node *lhs, Node *rhs, Token *tok);
 static Node *compound_stmt(Token **rest, Token *tok);
 static Node *stmt(Token **rest, Token *tok);
 static Node *expr(Token **rest, Token *tok);
@@ -631,9 +632,9 @@ Node *new_cast(Node *expr, Type *ty) {
 	return node;
 }
 
-static Node *cast(Node **rest, Token *tok) {
+static Node *cast(Token **rest, Token *tok) {
 	if (equal(tok, "(") && is_typename(tok->next)) {
-		Node *start = tok;
+		Token *start = tok;
 		Type *ty = typename(&tok, tok->next);
 		tok = skip(tok, ")");
 		Node *node = new_cast(cast(rest, tok), ty);
@@ -641,6 +642,20 @@ static Node *cast(Node **rest, Token *tok) {
 		return node;
 	}
 	return unary(rest, tok);
+}
+
+// convert `A op= B` to `tmp=&A, *tmp=*tmp op B`
+// where tmp is temporary pointer variable.
+static Node *to_assign(Node *binary) {
+	add_type(binary->lhs);
+	add_type(binary->rhs);
+	Token *tok = binary->tok;
+	Obj *var = new_lvar("", pointer_to(binary->lhs->ty));
+	Node *expr1 = new_binary(ND_ASSIGN, new_var_node(var, tok),
+		new_unary(ND_ADDR, binary->lhs, tok), tok);
+	Node *expr2 = new_binary(ND_ASSIGN, new_unary(ND_DEREF, new_var_node(var, tok), tok),
+		new_binary(binary->kind, new_unary(ND_DEREF, new_var_node(var, tok), tok), binary->rhs, tok), tok);
+	return new_binary(ND_COMMA, expr1, expr2, tok);
 }
 
 static Node *unary(Token **rest, Token *tok) {
@@ -652,6 +667,12 @@ static Node *unary(Token **rest, Token *tok) {
 		return new_unary(ND_ADDR, cast(rest, tok->next), tok);
 	} else if (equal(tok, "*")) {
 		return new_unary(ND_DEREF, cast(rest, tok->next), tok);
+	} else if (equal(tok, "++")) {
+		// `++A` as `A+=1`
+		return to_assign(new_add(unary(rest, tok->next), new_num(1, tok), tok));
+	} else if (equal(tok, "--")) {
+		// `--A` as `A-=1`
+		return to_assign(new_sub(unary(rest, tok->next), new_num(1, tok), tok));
 	}
 	return postfix(rest, tok);
 }
@@ -898,20 +919,6 @@ static Node *equality(Token **rest, Token *tok) {
 			return node;
 		}
 	}
-}
-
-// convert `A op= B` to `tmp=&A, *tmp=*tmp op B`
-// where tmp is temporary pointer variable.
-static Node *to_assign(Node *binary) {
-	add_type(binary->lhs);
-	add_type(binary->rhs);
-	Token *tok = binary->tok;
-	Obj *var = new_lvar("", pointer_to(binary->lhs->ty));
-	Node *expr1 = new_binary(ND_ASSIGN, new_var_node(var, tok),
-		new_unary(ND_ADDR, binary->lhs, tok), tok);
-	Node *expr2 = new_binary(ND_ASSIGN, new_unary(ND_DEREF, new_var_node(var, tok), tok),
-		new_binary(binary->kind, new_unary(ND_DEREF, new_var_node(var, tok), tok), binary->rhs, tok), tok);
-	return new_binary(ND_COMMA, expr1, expr2, tok);
 }
 
 static Node *assign(Token **rest, Token *tok) {
