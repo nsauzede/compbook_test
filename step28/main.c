@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 	while (arg < argc) {
 		if (*argv[arg] == '-' && strlen(argv[arg]) > 1) {
 
-		if (!strcmp(argv[arg], "--help") && !strcmp(argv[arg], "-h")) {
+		if (!strcmp(argv[arg], "--help") || !strcmp(argv[arg], "-h")) {
 			fprintf(stderr, "Compiler Book test - %s\n", VERSION);
 			fprintf(stderr, "Usage: %s [-x c] [-S] <file.c> [-o <output_file>]\n", argv[0]);
 			return 0;
