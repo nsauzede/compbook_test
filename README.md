@@ -35,8 +35,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] string literal
 - [x] compile from file
 - [x] GNU statement expression
-- [x] C tests
-- [x] Quine support
+- [x] C tests, Quine support
 - [x] octal/hex in strings
 - [x] block scope (local vars shadowing)
 - [x] .file/.loc
@@ -48,10 +47,15 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] void
 - [x] typedef, type cast
 - [x] bool, enum
+- [x] static funcs, loop variables
+- [ ] assignment ops
+- [ ] hex/oct/bin literals
+- [ ] mode unary/binary ops
+- [ ] incomplete types / array to pointer decay
+- [ ] goto/labels
 - [ ] break/continue/switch
 - [ ] do while
 - [ ] variadic function
-- [ ] static
 - [ ] ...
 - [ ] self-host ?
 

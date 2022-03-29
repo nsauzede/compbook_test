@@ -29,6 +29,9 @@ int main() {
   ASSERT(5, ({ int i=2, j=3; j=5,6; j; }));
 #endif
 
+  ASSERT(55, ({ int j=0; for (int i=0; i<=10; i=i+1) j=j+i; j; }));
+  ASSERT(3, ({ int i=3; int j=0; for (int i=0; i<=10; i=i+1) j=j+i; i; }));
+
   printf("OK\n");
   return 0;
 }
