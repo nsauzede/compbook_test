@@ -39,7 +39,7 @@ cast              = "(" type-name ")" cast | unary
 unary             = ("+" | "-" | "*" | "&") cast
     | ("++" | "--") unary
     | postfix
-postfix           = primary ("[" expr "]" | "." ident | "->" ident)*
+postfix           = primary ("[" expr "]" | "." ident | "->" ident | "++" | "--")*
 funcall           = ident "(" (assign ("," assign)*)? ")"
 primary           = "(" "{" stmt+ "}" ")"
     | "(" expr ")"
