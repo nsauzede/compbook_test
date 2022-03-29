@@ -403,7 +403,10 @@ static void emit_text(Obj *prog) {
 		if (!obj->is_function || !obj->is_definition) {
 			continue;
 		}
-		PRINTF("\t.globl %s\n", obj->name);
+		if (obj->is_static)
+			PRINTF("\t.local %s\n", obj->name);
+		else
+			PRINTF("\t.globl %s\n", obj->name);
 		PRINTF("\t.text\n");
 		PRINTF("%s:\n", obj->name);
 		current_fn = obj;
