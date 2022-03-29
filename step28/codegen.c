@@ -212,6 +212,16 @@ static void gen_expr(Node *node) {
 			gen_expr(node->lhs);
 			gen_expr(node->rhs);
 			return;
+		case ND_CAST:
+			gen_expr(node->lhs);
+			cast(node->lhs->ty, node->ty);
+			return;
+		case ND_NOT:
+			gen_expr(node->lhs);
+			PRINTF("\tcmp $0, %%rax\n");
+			PRINTF("\tsete %%al\n");
+			PRINTF("\tmovzx %%al, %%rax\n");
+			return;
 		case ND_FUNCALL: {
 			int nargs = 0;
 			for (Node *arg = node->args; arg; arg = arg->next) {
@@ -228,10 +238,6 @@ static void gen_expr(Node *node) {
 			PRINTF("\tcall %s\n", node->funcname);
 			return;
 		}
-		case ND_CAST:
-			gen_expr(node->lhs);
-			cast(node->lhs->ty, node->ty);
-			return;
 	}
 	gen_expr(node->rhs);
 	push();

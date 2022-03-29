@@ -123,6 +123,9 @@ void add_type(Node *node) {
 	case ND_FUNCALL:
 		node->ty = ty_long;
 		return;
+	case ND_NOT:
+		node->ty = ty_int;
+		return;
 	case ND_VAR:
 		node->ty = node->var->ty;
 		return;
@@ -158,5 +161,17 @@ void add_type(Node *node) {
 		}
 		error_tok(node->tok, "statement expression returning void not supported");
 		return;
+#if 1
+	// ignore those node kinds (no "type" side-effect needed / "typeless")
+	case ND_RETURN:
+	case ND_EXPR_STMT:
+	case ND_BLOCK:
+	case ND_IF:
+	case ND_FOR:
+		return;
+	// trap unhandled node kinds
+	default:
+		error_tok(node->tok, "unhandled node kind %d", node->kind);
+#endif
 	}
 }

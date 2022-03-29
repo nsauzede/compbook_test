@@ -667,6 +667,8 @@ static Node *unary(Token **rest, Token *tok) {
 		return new_unary(ND_ADDR, cast(rest, tok->next), tok);
 	} else if (equal(tok, "*")) {
 		return new_unary(ND_DEREF, cast(rest, tok->next), tok);
+	} else if (equal(tok, "!")) {
+		return new_unary(ND_NOT, cast(rest, tok->next), tok);
 	} else if (equal(tok, "++")) {
 		// `++A` as `A+=1`
 		return to_assign(new_add(unary(rest, tok->next), new_num(1, tok), tok));
