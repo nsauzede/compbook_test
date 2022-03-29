@@ -30,11 +30,11 @@ compound-stmt     = (typedef | declaration | stmt)* "}"
 expr-stmt         = expr? ";"
 expr              = assign ("," expr)?
 assign            = equality (assign-op assign)?
-assign-op         = "=" | "+=" | "-=" | "*=" | "/="
+assign-op         = "=" | "+=" | "-=" | "*=" | "/=" | "%="
 equality          = relational ("==" relational | "!=" relational)*
 relational        = add ("<" add | "<=" add | ">" add | ">=" add)*
 add               = mul ("+" mul | "-" mul)*
-mul               = unary ("*" unary | "/" unary)*
+mul               = cast ("*" cast | "/" cast | "%" cast)*
 cast              = "(" type-name ")" cast | unary
 unary             = ("+" | "-" | "*" | "&" | "!" | "~") cast
     | ("++" | "--") unary

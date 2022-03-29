@@ -244,11 +244,12 @@ static void gen_expr(Node *node) {
 		}
 #if 1
 // avoid segfault with new unhandled node kinds
-		// ignore those node kinds, handled below in following switch
+		// ignore those node kinds in pre-switch, handled below in post-switch
 		case ND_ADD:
 		case ND_SUB:
 		case ND_MUL:
 		case ND_DIV:
+		case ND_MOD:
 		case ND_EQ:
 		case ND_NE:
 		case ND_LT:
@@ -281,12 +282,15 @@ static void gen_expr(Node *node) {
 			PRINTF("\timul %s, %s\n", di, ax);
 			return;
 		case ND_DIV:
+		case ND_MOD:
 			if (node->lhs->ty->size == 8) {
 				PRINTF("\tcqo\n");
 			} else {
 				PRINTF("\tcdq\n");
 			}
 			PRINTF("\tidiv %s\n", di);
+			if (node->kind == ND_MOD)
+				PRINTF("\tmov %%rdx, %%rax\n");
 			return;
 		case ND_EQ:
 		case ND_NE:
