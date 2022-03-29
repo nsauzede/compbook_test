@@ -29,8 +29,11 @@ stmt              = "return" expr ";"
 compound-stmt     = (typedef | declaration | stmt)* "}"
 expr-stmt         = expr? ";"
 expr              = assign ("," expr)?
-assign            = equality (assign-op assign)?
-assign-op         = "=" | "+=" | "-=" | "*=" | "/=" | "%="
+assign            = bitor (assign-op assign)?
+bitor             = bitxor ("|" bitxor)*
+bitxor            = bitand ("^" bitand)*
+bitand            = equality ("&" equality)*
+assign-op         = "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^="
 equality          = relational ("==" relational | "!=" relational)*
 relational        = add ("<" add | "<=" add | ">" add | ">=" add)*
 add               = mul ("+" mul | "-" mul)*

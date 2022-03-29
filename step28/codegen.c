@@ -250,6 +250,9 @@ static void gen_expr(Node *node) {
 		case ND_MUL:
 		case ND_DIV:
 		case ND_MOD:
+		case ND_BITAND:
+		case ND_BITOR:
+		case ND_BITXOR:
 		case ND_EQ:
 		case ND_NE:
 		case ND_LT:
@@ -291,6 +294,15 @@ static void gen_expr(Node *node) {
 			PRINTF("\tidiv %s\n", di);
 			if (node->kind == ND_MOD)
 				PRINTF("\tmov %%rdx, %%rax\n");
+			return;
+		case ND_BITAND:
+			PRINTF("\tand %%rdi, %%rax\n");
+			return;
+		case ND_BITOR:
+			PRINTF("\tor %%rdi, %%rax\n");
+			return;
+		case ND_BITXOR:
+			PRINTF("\txor %%rdi, %%rax\n");
 			return;
 		case ND_EQ:
 		case ND_NE:
