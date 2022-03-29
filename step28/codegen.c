@@ -222,6 +222,10 @@ static void gen_expr(Node *node) {
 			PRINTF("\tsete %%al\n");
 			PRINTF("\tmovzx %%al, %%rax\n");
 			return;
+		case ND_BITNOT:
+			gen_expr(node->lhs);
+			PRINTF("\tnot %%rax\n");
+			return;
 		case ND_FUNCALL: {
 			int nargs = 0;
 			for (Node *arg = node->args; arg; arg = arg->next) {
@@ -238,6 +242,21 @@ static void gen_expr(Node *node) {
 			PRINTF("\tcall %s\n", node->funcname);
 			return;
 		}
+#if 1
+// avoid segfault with new unhandled node kinds
+		// ignore those node kinds, handled below in following switch
+		case ND_ADD:
+		case ND_SUB:
+		case ND_MUL:
+		case ND_DIV:
+		case ND_EQ:
+		case ND_NE:
+		case ND_LT:
+		case ND_LE:
+			break;
+		default:
+			error_tok(node->tok, "unhandled node kind %d", node->kind);
+#endif
 	}
 	gen_expr(node->rhs);
 	push();
