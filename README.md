@@ -52,7 +52,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] hex/oct/bin literals
 - [x] more unary/binary ops
 - [x] incomplete types / array to pointer decay
-- [ ] goto/labels
+- [x] goto/labels
 - [ ] break/continue/switch
 - [ ] do while
 - [ ] variadic function
