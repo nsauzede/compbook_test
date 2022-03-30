@@ -50,7 +50,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] static funcs, loop variables
 - [x] assignment ops
 - [x] hex/oct/bin literals
-- [ ] more unary/binary ops
+- [x] more unary/binary ops
 - [ ] incomplete types / array to pointer decay
 - [ ] goto/labels
 - [ ] break/continue/switch

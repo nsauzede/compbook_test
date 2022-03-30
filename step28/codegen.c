@@ -22,6 +22,7 @@ static int depth;
 static void gen_expr(Node *node);
 static void gen_stmt(Node *node);
 
+// helper to increment unique label count
 static int count() {
 	static int i = 1;
 	return i++;
@@ -226,6 +227,36 @@ static void gen_expr(Node *node) {
 			gen_expr(node->lhs);
 			PRINTF("\tnot %%rax\n");
 			return;
+		case ND_LOGAND: {
+			int c = count();
+			gen_expr(node->lhs);
+			PRINTF("\tcmp $0, %%rax\n");
+			PRINTF("\tje .L.false.%d\n", c);
+			gen_expr(node->rhs);
+			PRINTF("\tcmp $0, %%rax\n");
+			PRINTF("\tje .L.false.%d\n", c);
+			PRINTF("\tmov $1, %%rax\n");
+			PRINTF("\tjmp .L.end.%d\n", c);
+			PRINTF("\t.L.false.%d:\n", c);
+			PRINTF("\tmov $0, %%rax\n");
+			PRINTF("\t.L.end.%d:\n", c);
+			return;
+		}
+		case ND_LOGOR: {
+			int c = count();
+			gen_expr(node->lhs);
+			PRINTF("\tcmp $0, %%rax\n");
+			PRINTF("\tjne .L.true.%d\n", c);
+			gen_expr(node->rhs);
+			PRINTF("\tcmp $0, %%rax\n");
+			PRINTF("\tjne .L.true.%d\n", c);
+			PRINTF("\tmov $0, %%rax\n");
+			PRINTF("\tjmp .L.end.%d\n", c);
+			PRINTF("\t.L.true.%d:\n", c);
+			PRINTF("\tmov $1, %%rax\n");
+			PRINTF("\t.L.end.%d:\n", c);
+			return;
+		}
 		case ND_FUNCALL: {
 			int nargs = 0;
 			for (Node *arg = node->args; arg; arg = arg->next) {

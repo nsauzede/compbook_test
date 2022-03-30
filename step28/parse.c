@@ -975,8 +975,28 @@ static Node *bitor(Token **rest, Token *tok) {
 	return node;
 }
 
-static Node *assign(Token **rest, Token *tok) {
+static Node *logand(Token **rest, Token *tok) {
 	Node *node = bitor(&tok, tok);
+	while (equal(tok, "&&")) {
+		Token *start = tok;
+		node = new_binary(ND_LOGAND, node, bitor(&tok, tok->next), start);
+	}
+	*rest = tok;
+	return node;
+}
+
+static Node *logor(Token **rest, Token *tok) {
+	Node *node = logand(&tok, tok);
+	while (equal(tok, "||")) {
+		Token *start = tok;
+		node = new_binary(ND_LOGOR, node, logand(&tok, tok->next), start);
+	}
+	*rest = tok;
+	return node;
+}
+
+static Node *assign(Token **rest, Token *tok) {
+	Node *node = logor(&tok, tok);
 	if (equal(tok, "=")) {
 		// fprintf(stderr, "OUTPUT ASSIGN !!\n");
 		return new_binary(ND_ASSIGN, node, assign(rest, tok->next), tok);
