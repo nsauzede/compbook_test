@@ -453,12 +453,18 @@ static Type *func_params(Token **rest, Token *tok, Type *ty) {
 	Type head = {};
 	Type *cur = &head;
 	while (!equal(tok, ")")) {
-		if (cur != &head) {
+		if (cur != &head)
 			tok = skip(tok, ",");
+		Type *ty2 = declspec(&tok, tok, NULL);
+		ty2 = declarator(&tok, tok, ty2);
+		// "array of T" is converted to "pointer to T" only in the parameter context.
+		// For example *argv[] is converted to **argv
+		if (ty2->kind == TY_ARRAY) {
+			Token *name = ty2->name;
+			ty2 = pointer_to(ty2->base);
+			ty2->name = name;
 		}
-		Type *basety = declspec(&tok, tok, NULL);
-		Type *ty = declarator(&tok, tok, basety);
-		cur = cur->next = copy_type(ty);
+		cur = cur->next = copy_type(ty2);
 	}
 	ty = func_type(ty);
 	ty->params = head.next;
