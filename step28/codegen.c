@@ -237,9 +237,9 @@ static void gen_expr(Node *node) {
 			PRINTF("\tje .L.false.%d\n", c);
 			PRINTF("\tmov $1, %%rax\n");
 			PRINTF("\tjmp .L.end.%d\n", c);
-			PRINTF("\t.L.false.%d:\n", c);
+			PRINTF(".L.false.%d:\n", c);
 			PRINTF("\tmov $0, %%rax\n");
-			PRINTF("\t.L.end.%d:\n", c);
+			PRINTF(".L.end.%d:\n", c);
 			return;
 		}
 		case ND_LOGOR: {
@@ -252,9 +252,9 @@ static void gen_expr(Node *node) {
 			PRINTF("\tjne .L.true.%d\n", c);
 			PRINTF("\tmov $0, %%rax\n");
 			PRINTF("\tjmp .L.end.%d\n", c);
-			PRINTF("\t.L.true.%d:\n", c);
+			PRINTF(".L.true.%d:\n", c);
 			PRINTF("\tmov $1, %%rax\n");
-			PRINTF("\t.L.end.%d:\n", c);
+			PRINTF(".L.end.%d:\n", c);
 			return;
 		}
 		case ND_FUNCALL: {
@@ -390,6 +390,13 @@ static void gen_stmt(Node *node) {
 		case ND_BLOCK:
 			for (Node *n = node->body; n; n = n->next)
 				gen_stmt(n);
+			return;
+		case ND_GOTO:
+			PRINTF("\tjmp %s\n", node->unique_label);
+			return;
+		case ND_LABEL:
+			PRINTF("%s:\n", node->unique_label);
+			gen_stmt(node->lhs);
 			return;
 		case ND_RETURN:
 			gen_expr(node->lhs);

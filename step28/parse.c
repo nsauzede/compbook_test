@@ -53,6 +53,10 @@ static Scope *scope = &(Scope){};
 // Points to the function object the parser is currently parsing.
 static Obj *current_fn;
 
+// List of all goto statements and labels in the current function.
+static Node *gotos;
+static Node *labels;
+
 static Node *new_add(Node *lhs, Node *rhs, Token *tok);
 static Node *new_sub(Node *lhs, Node *rhs, Token *tok);
 static Node *compound_stmt(Token **rest, Token *tok);
@@ -1138,7 +1142,8 @@ static Node *stmt(Token **rest, Token *tok) {
 		add_type(exp);
 		node->lhs = new_cast(exp, current_fn->ty->return_ty);
 		return node;
-	} else if (equal(tok, "if")) {
+	}
+	if (equal(tok, "if")) {
 		Node *node = new_node(ND_IF, tok);
 		tok = skip(tok->next, "(");
 		node->cond = expr(&tok, tok);
@@ -1149,7 +1154,8 @@ static Node *stmt(Token **rest, Token *tok) {
 		}
 		*rest = tok;
 		return node;
-	} else if (equal(tok, "for")) {
+	}
+	if (equal(tok, "for")) {
 		Node *node = new_node(ND_FOR, tok);
 		tok = skip(tok->next, "(");
 		enter_scope();
@@ -1171,12 +1177,29 @@ static Node *stmt(Token **rest, Token *tok) {
 		leave_scope();
 		return node;
 	}
-	else if (equal(tok, "while")) {
+	if (equal(tok, "while")) {
 		Node *node = new_node(ND_FOR, tok);
 		tok = skip(tok->next, "(");
 		node->cond = expr(&tok, tok);
 		tok = skip(tok, ")");
 		node->then = stmt(rest, tok);
+		return node;
+	}
+	if (equal(tok, "goto")) {
+		Node *node = new_node(ND_GOTO, tok);
+		node->label = get_ident(tok->next);
+		node->goto_next = gotos;
+		gotos = node;
+		*rest = skip(tok->next->next, ";");
+		return node;
+	}
+	if (tok->kind == TK_IDENT && equal(tok->next, ":")) {
+		Node *node = new_node(ND_LABEL, tok);
+		node->label = strndup(tok->loc, tok->len);
+		node->unique_label = new_unique_name();
+		node->lhs = stmt(rest, tok->next->next);
+		node->goto_next = labels;
+		labels = node;
 		return node;
 	}
 	if (equal(tok, "{")) {
@@ -1190,6 +1213,24 @@ static void create_param_lvars(Type *param) {
     create_param_lvars(param->next);
     new_lvar(get_ident(param->name), param);
   }
+}
+
+// This function matches gotos with labels
+// We cannot resolve gotos as we parse a function because gotos
+// can refer to a label that appears later in the function.
+// So we need to do this after we parse the entire function.
+static void resolve_goto_labels() {
+	for (Node *x = gotos; x; x = x->goto_next) {
+		for (Node *y = labels; y; y = y->goto_next) {
+			if (!strcmp(x->label, y->label)) {
+				x->unique_label = y->unique_label;
+				break;
+			}
+		}
+		if (x->unique_label == NULL)
+			error_tok(x->tok->next, "use of undeclared label (%s)", x->label);
+	}
+	gotos = labels = NULL;
 }
 
 static Token *function(Token *tok, Type *basety, VarAttr *attr) {
@@ -1212,6 +1253,7 @@ static Token *function(Token *tok, Type *basety, VarAttr *attr) {
 	fn->body = compound_stmt(&tok, tok);
 	fn->locals = locals;
 	leave_scope();
+	resolve_goto_labels();
 	return tok;
 }
 

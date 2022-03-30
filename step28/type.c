@@ -181,6 +181,8 @@ void add_type(Node *node) {
 	case ND_BLOCK:
 	case ND_IF:
 	case ND_FOR:
+	case ND_GOTO:
+	case ND_LABEL:
 		return;
 	// trap unhandled node kinds
 	default:
