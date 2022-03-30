@@ -180,6 +180,7 @@ struct Type {
 struct Member {
 	Member *next;
 	Type *ty;
+	Token *tok;	// for error message
 	Token *name;
 	int offset;
 };

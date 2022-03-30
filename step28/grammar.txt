@@ -2,7 +2,9 @@ program           = (typedef | function-definition | global-variable)*
 function          = declspec declarator
 type-suffix       = "(" func-params
     | "[" num "]" type-suffix
+    | "[" array-dimensions
     | epsilon
+array-dimensions  = num? "]" type-suffix
 func-params       = (param ("," param)*)? ")"
 param             = declspec declarator
 type-name         = declspec abstract-declarator

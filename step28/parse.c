@@ -58,6 +58,7 @@ static Node *new_sub(Node *lhs, Node *rhs, Token *tok);
 static Node *compound_stmt(Token **rest, Token *tok);
 static Node *stmt(Token **rest, Token *tok);
 static Node *expr(Token **rest, Token *tok);
+static Type *type_suffix(Token **rest, Token *tok, Type *ty);
 static Type *declarator(Token **rest, Token *tok, Type *ty);
 static Node *declaration(Token **rest, Token *tok, Type *basety);
 static Node *assign(Token **rest, Token *tok);
@@ -465,16 +466,23 @@ static Type *func_params(Token **rest, Token *tok, Type *ty) {
 	return ty;
 }
 
+static Type *array_dimensions(Token **rest, Token *tok, Type *ty) {
+	if (equal(tok, "]")) {
+		ty = type_suffix(rest, tok->next, ty);
+		return array_of(ty, -1);
+	}
+	int sz = get_number(tok);
+	tok = skip(tok->next, "]");
+	ty = type_suffix(rest, tok, ty);
+	return array_of(ty, sz);
+}
+
 static Type *type_suffix(Token **rest, Token *tok, Type *ty) {
 	if (equal(tok, "(")) {
 		return func_params(rest, tok->next, ty);
 	}
-	if (equal(tok, "[")) {
-		int sz = get_number(tok->next);
-		tok = skip(tok->next->next, "]");
-		ty = type_suffix(rest, tok, ty);
-		return array_of(ty, sz);
-	}
+	if (equal(tok, "["))
+		return array_dimensions(rest, tok->next, ty);
 	*rest = tok;
 	return ty;
 }
@@ -1084,6 +1092,8 @@ static Node *declaration(Token **rest, Token *tok, Type *basety) {
       tok = skip(tok, ",");
 
     Type *ty = declarator(&tok, tok, basety);
+    if (ty->size < 0)
+      error_tok(tok, "variable has incomplete type");
     Obj *var = new_lvar(get_ident(ty->name), ty);
 
     if (!equal(tok, "="))
