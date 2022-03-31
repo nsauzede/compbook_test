@@ -381,6 +381,7 @@ static void gen_stmt(Node *node) {
 				PRINTF("\tje %s\n", node->brk_label);
 			}
 			gen_stmt(node->then);
+			PRINTF("%s:\n", node->cont_label);
 			if (node->inc)
 				gen_expr(node->inc);
 			PRINTF("\tjmp .L.begin.%d\n", c);

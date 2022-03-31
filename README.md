@@ -54,6 +54,12 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] incomplete types / array to pointer decay
 - [x] goto/labels
 - [ ] break/continue/switch
+- [ ] <<,>>,<<=,>>=,?: ops
+- [ ] const expressions
+- [ ] lots of var initializers
+- [ ] flexible array member
+- [ ] extern, static local variables
+- [ ] compound literals, empty return, global variables
 - [ ] do while
 - [ ] variadic function
 - [ ] signed/unsigned

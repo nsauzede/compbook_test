@@ -28,6 +28,7 @@ stmt              = "return" expr ";"
     | "while" "(" expr ")" stmt
     | "goto" ident ";"
     | "break" ";"
+    | "continue" ";"
     | ident ":" stmt
     | "{" compound-stmt
     | expr-stmt

@@ -216,7 +216,7 @@ static bool is_keyword(Token *tok) {
     "return", "if", "else", "for", "while",
     "void", "_Bool", "char", "short", "int", "long",
     "sizeof", "struct", "union", "typedef",
-    "enum", "static", "goto", "break",
+    "enum", "static", "goto", "break", "continue",
   };
 
   for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++)

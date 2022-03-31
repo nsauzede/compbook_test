@@ -130,8 +130,9 @@ struct Node {
 	Node *init;	// FOR
 	Node *inc;	// FOR
 
-	// "break" label
+	// "break" and "continue" labels
 	char *brk_label;
+	char *cont_label;
 
 	// for block or statement expression
 	Node *body;
