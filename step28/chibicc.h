@@ -122,19 +122,24 @@ struct Node {
 
 	Node *lhs;
 	Node *rhs;
-	// for block or statement expression
-	Node *body;
+
 	// for IF/WHILE/FOR :
-	Node *init;	// FOR
 	Node *cond;
-	Node *inc;	// FOR
 	Node *then;
 	Node *els;
+	Node *init;	// FOR
+	Node *inc;	// FOR
+
+	// "break" label
+	char *brk_label;
+
+	// for block or statement expression
+	Node *body;
 
 	// Struct member access
 	Member *member;
 
-	// function call	
+	// function call
 	char *funcname;
 	Type *func_ty;
 	Node *args;

@@ -378,13 +378,13 @@ static void gen_stmt(Node *node) {
 			if (node->cond) {
 				gen_expr(node->cond);
 				PRINTF("\tcmp $0, %%rax\n");
-				PRINTF("\tje .L.end.%d\n", c);
+				PRINTF("\tje %s\n", node->brk_label);
 			}
 			gen_stmt(node->then);
 			if (node->inc)
 				gen_expr(node->inc);
 			PRINTF("\tjmp .L.begin.%d\n", c);
-			PRINTF(".L.end.%d:\n", c);
+			PRINTF("%s:\n", node->brk_label);
 			return;
 		}
 		case ND_BLOCK:
