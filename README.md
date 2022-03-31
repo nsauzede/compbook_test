@@ -53,7 +53,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] more unary/binary ops
 - [x] incomplete types / array to pointer decay
 - [x] goto/labels
-- [ ] break/continue/switch
+- [x] break/continue/switch
 - [ ] <<,>>,<<=,>>=,?: ops
 - [ ] const expressions
 - [ ] lots of var initializers

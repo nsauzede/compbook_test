@@ -183,6 +183,8 @@ void add_type(Node *node) {
 	case ND_FOR:
 	case ND_GOTO:
 	case ND_LABEL:
+	case ND_SWITCH:
+	case ND_CASE:
 		return;
 	// trap unhandled node kinds
 	default:

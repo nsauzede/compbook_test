@@ -24,6 +24,9 @@ struct-union-decl = ident? ("{" struct-members)?
 struct-members    = (declspec declarator ("," declarator)* ";")*
 stmt              = "return" expr ";"
     | "if" "(" expr ")" stmt ("else" stmt)?
+    | "switch" "(" expr ")" stmt
+    | "case" num ":" stmt
+    | "default" ":" stmt
     | "for" "(" expr-stmt expr? ";" expr? ")" stmt
     | "while" "(" expr ")" stmt
     | "goto" ident ";"
