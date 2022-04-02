@@ -220,9 +220,9 @@ static Node *new_long(int64_t val, Token *tok) {
 }
 
 static Node *new_var_node(Obj *var, Token *tok) {
-  Node *node = new_node(ND_VAR, tok);
-  node->var = var;
-  return node;
+	Node *node = new_node(ND_VAR, tok);
+	node->var = var;
+	return node;
 }
 
 static VarScope *push_scope(char *name) {
@@ -234,19 +234,19 @@ static VarScope *push_scope(char *name) {
 }
 
 static Obj *new_var(char *name, Type *ty) {
-  Obj *var = calloc(1, sizeof(Obj));
-  var->name = name;
-  var->ty = ty;
-  push_scope(name)->var = var;
-  return var;
+	Obj *var = calloc(1, sizeof(Obj));
+	var->name = name;
+	var->ty = ty;
+	push_scope(name)->var = var;
+	return var;
 }
 
 static Obj *new_lvar(char *name, Type *ty) {
-  Obj *var = new_var(name, ty);
-  var->is_local = true;
+	Obj *var = new_var(name, ty);
+	var->is_local = true;
 #if 1
-  var->next = locals;
-  locals = var;
+	var->next = locals;
+	locals = var;
 #else
 	if (!locals) {
 		locals = var;
@@ -258,14 +258,14 @@ static Obj *new_lvar(char *name, Type *ty) {
 		next->next = var;
 	}
 #endif
-  return var;
+	return var;
 }
 
 static Obj *new_gvar(char *name, Type *ty) {
-  Obj *var = new_var(name, ty);
-  var->next = globals;
-  globals = var;
-  return var;
+	Obj *var = new_var(name, ty);
+	var->next = globals;
+	globals = var;
+	return var;
 }
 
 static char *new_unique_name(void) {
@@ -882,56 +882,56 @@ static Node *mul(Token **rest, Token *tok) {
 // In other words, we need to scale an integer value before adding to a
 // pointer value. This function takes care of the scaling.
 static Node *new_add(Node *lhs, Node *rhs, Token *tok) {
-  add_type(lhs);
-  add_type(rhs);
+	add_type(lhs);
+	add_type(rhs);
 
-  // num + num
-  if (is_integer(lhs->ty) && is_integer(rhs->ty))
-    return new_binary(ND_ADD, lhs, rhs, tok);
+	// num + num
+	if (is_integer(lhs->ty) && is_integer(rhs->ty))
+		return new_binary(ND_ADD, lhs, rhs, tok);
 
-  // ptr + ptr (illegal)
-  if (lhs->ty->base && rhs->ty->base)
-    error_tok(tok, "invalid operands");
+	// ptr + ptr (illegal)
+	if (lhs->ty->base && rhs->ty->base)
+		error_tok(tok, "invalid operands");
 
-  // Canonicalize `num + ptr` to `ptr + num`.
-  if (!lhs->ty->base && rhs->ty->base) {
-    Node *tmp = lhs;
-    lhs = rhs;
-    rhs = tmp;
-  }
+	// Canonicalize `num + ptr` to `ptr + num`.
+	if (!lhs->ty->base && rhs->ty->base) {
+		Node *tmp = lhs;
+		lhs = rhs;
+		rhs = tmp;
+	}
 
-  // ptr + num
-  rhs = new_binary(ND_MUL, rhs, new_long(lhs->ty->base->size, tok), tok);
-  return new_binary(ND_ADD, lhs, rhs, tok);
+	// ptr + num
+	rhs = new_binary(ND_MUL, rhs, new_long(lhs->ty->base->size, tok), tok);
+		return new_binary(ND_ADD, lhs, rhs, tok);
 }
 
 // Like `+`, `-` is overloaded for the pointer type.
 static Node *new_sub(Node *lhs, Node *rhs, Token *tok) {
-  add_type(lhs);
-  add_type(rhs);
+	add_type(lhs);
+	add_type(rhs);
 
-  // num - num
-  if (is_integer(lhs->ty) && is_integer(rhs->ty))
-    return new_binary(ND_SUB, lhs, rhs, tok);
+	// num - num
+	if (is_integer(lhs->ty) && is_integer(rhs->ty))
+		return new_binary(ND_SUB, lhs, rhs, tok);
 
-  // ptr - num
-  if (lhs->ty->base && is_integer(rhs->ty)) {
-    rhs = new_binary(ND_MUL, rhs, new_long(lhs->ty->base->size, tok), tok);
-    add_type(rhs);
-    Node *node = new_binary(ND_SUB, lhs, rhs, tok);
-    node->ty = lhs->ty;
-    return node;
-  }
+	// ptr - num
+	if (lhs->ty->base && is_integer(rhs->ty)) {
+		rhs = new_binary(ND_MUL, rhs, new_long(lhs->ty->base->size, tok), tok);
+		add_type(rhs);
+		Node *node = new_binary(ND_SUB, lhs, rhs, tok);
+		node->ty = lhs->ty;
+		return node;
+	}
 
-  // ptr - ptr, which returns how many elements are between the two.
-  if (lhs->ty->base && rhs->ty->base) {
-    Node *node = new_binary(ND_SUB, lhs, rhs, tok);
-    node->ty = ty_int;
-	node = new_binary(ND_DIV, node, new_num(lhs->ty->base->size, tok), tok);
-    return node;
-  }
+	// ptr - ptr, which returns how many elements are between the two.
+	if (lhs->ty->base && rhs->ty->base) {
+		Node *node = new_binary(ND_SUB, lhs, rhs, tok);
+		node->ty = ty_int;
+		node = new_binary(ND_DIV, node, new_num(lhs->ty->base->size, tok), tok);
+		return node;
+	}
 
-  error_tok(tok, "invalid operands");
+	error_tok(tok, "invalid operands");
 }
 
 static Node *add(Token **rest, Token *tok) {
@@ -1072,15 +1072,15 @@ static Node *expr(Token **rest, Token *tok) {
 }
 
 static Node *expr_stmt(Token **rest, Token *tok) {
-  if (equal(tok, ";")) {
-    *rest = tok->next;
-    return new_node(ND_BLOCK, tok);
-  }
+	if (equal(tok, ";")) {
+		*rest = tok->next;
+		return new_node(ND_BLOCK, tok);
+	}
 
-  Node *node = new_node(ND_EXPR_STMT, tok);
-  node->lhs = expr(&tok, tok);
-  *rest = skip(tok, ";");
-  return node;
+	Node *node = new_node(ND_EXPR_STMT, tok);
+	node->lhs = expr(&tok, tok);
+	*rest = skip(tok, ";");
+	return node;
 }
 
 static Node *compound_stmt(Token **rest, Token *tok) {
@@ -1114,32 +1114,32 @@ static Node *compound_stmt(Token **rest, Token *tok) {
 }
 
 static Node *declaration(Token **rest, Token *tok, Type *basety) {
-  Node head = {};
-  Node *cur = &head;
-  int i = 0;
+	Node head = {};
+	Node *cur = &head;
+	int i = 0;
 
-  while (!equal(tok, ";")) {
-    if (i++ > 0)
-      tok = skip(tok, ",");
+	while (!equal(tok, ";")) {
+		if (i++ > 0)
+			tok = skip(tok, ",");
 
-    Type *ty = declarator(&tok, tok, basety);
-    if (ty->size < 0)
-      error_tok(tok, "variable has incomplete type");
-    Obj *var = new_lvar(get_ident(ty->name), ty);
+		Type *ty = declarator(&tok, tok, basety);
+		if (ty->size < 0)
+			error_tok(tok, "variable has incomplete type");
+		Obj *var = new_lvar(get_ident(ty->name), ty);
 
-    if (!equal(tok, "="))
-      continue;
+		if (!equal(tok, "="))
+			continue;
 
-    Node *lhs = new_var_node(var, ty->name);
-    Node *rhs = assign(&tok, tok->next);
-    Node *node = new_binary(ND_ASSIGN, lhs, rhs, tok);
-    cur = cur->next = new_unary(ND_EXPR_STMT, node, tok);
-  }
+		Node *lhs = new_var_node(var, ty->name);
+		Node *rhs = assign(&tok, tok->next);
+		Node *node = new_binary(ND_ASSIGN, lhs, rhs, tok);
+		cur = cur->next = new_unary(ND_EXPR_STMT, node, tok);
+	}
 
-  Node *node = new_node(ND_BLOCK, tok);
-  node->body = head.next;
-  *rest = tok->next;
-  return node;
+	Node *node = new_node(ND_BLOCK, tok);
+	node->body = head.next;
+	*rest = tok->next;
+	return node;
 }
 
 static Node *stmt(Token **rest, Token *tok) {
@@ -1282,10 +1282,10 @@ static Node *stmt(Token **rest, Token *tok) {
 }
 
 static void create_param_lvars(Type *param) {
-  if (param) {
-    create_param_lvars(param->next);
-    new_lvar(get_ident(param->name), param);
-  }
+	if (param) {
+		create_param_lvars(param->next);
+		new_lvar(get_ident(param->name), param);
+	}
 }
 
 // This function matches gotos with labels
@@ -1331,28 +1331,28 @@ static Token *function(Token *tok, Type *basety, VarAttr *attr) {
 }
 
 static Token *global_variable(Token *tok, Type *basety) {
-  bool first = true;
+	bool first = true;
 
-  while (!consume(&tok, tok, ";")) {
-    if (!first)
-      tok = skip(tok, ",");
-    first = false;
+	while (!consume(&tok, tok, ";")) {
+		if (!first)
+			tok = skip(tok, ",");
+		first = false;
 
-    Type *ty = declarator(&tok, tok, basety);
-    new_gvar(get_ident(ty->name), ty);
-  }
-  return tok;
+		Type *ty = declarator(&tok, tok, basety);
+		new_gvar(get_ident(ty->name), ty);
+	}
+	return tok;
 }
 
 // Lookahead tokens and returns true if a given token is a start
 // of a function definition or declaration.
 static bool is_function(Token *tok) {
-  if (equal(tok, ";"))
-    return false;
+	if (equal(tok, ";"))
+		return false;
 
-  Type dummy = {};
-  Type *ty = declarator(&tok, tok, &dummy);
-  return ty->kind == TY_FUNC;
+	Type dummy = {};
+	Type *ty = declarator(&tok, tok, &dummy);
+	return ty->kind == TY_FUNC;
 }
 
 Obj *parse(Token *tok) {

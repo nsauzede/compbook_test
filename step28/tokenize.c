@@ -191,12 +191,12 @@ static bool startswith(char *p, char *with) {
 
 // Returns true if c is valid as the first character of an identifier.
 static bool is_ident1(char c) {
-  return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
+	return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
 }
 
 // Returns true if c is valid as a non-first character of an identifier.
 static bool is_ident2(char c) {
-  return is_ident1(c) || ('0' <= c && c <= '9');
+	return is_ident1(c) || ('0' <= c && c <= '9');
 }
 
 static int read_punct(char *p) {
@@ -212,24 +212,24 @@ static int read_punct(char *p) {
 }
 
 static bool is_keyword(Token *tok) {
-  static char *kw[] = {
-    "return", "if", "else", "for", "while",
-    "void", "_Bool", "char", "short", "int", "long",
-    "sizeof", "struct", "union", "typedef",
-    "enum", "static", "goto", "break", "continue",
-    "switch", "case", "default",
-  };
+	static char *kw[] = {
+		"return", "if", "else", "for", "while",
+		"void", "_Bool", "char", "short", "int", "long",
+		"sizeof", "struct", "union", "typedef",
+		"enum", "static", "goto", "break", "continue",
+		"switch", "case", "default",
+	};
 
-  for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++)
-    if (equal(tok, kw[i]))
-      return true;
-  return false;
+	for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++)
+		if (equal(tok, kw[i]))
+			return true;
+	return false;
 }
 
 void convert_keywords(Token *tok) {
-  for (Token *t = tok; t->kind != TK_EOF; t = t->next)
-    if (is_keyword(t))
-      t->kind = TK_KEYWORD;
+	for (Token *t = tok; t->kind != TK_EOF; t = t->next)
+		if (is_keyword(t))
+			t->kind = TK_KEYWORD;
 }
 
 static int read_escaped_char(char **new_pos, char *p) {

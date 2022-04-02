@@ -43,19 +43,19 @@ int align_to(int n, int align) {
 }
 
 static void gen_addr(Node *node) {
-  switch (node->kind) {
-  case ND_VAR:
-    if (node->var->is_local) {
-      // Local variable
-      PRINTF("\tlea %d(%%rbp), %%rax\n", node->var->offset);
-    } else {
-      // Global variable
-      PRINTF("\tlea %s(%%rip), %%rax\n", node->var->name);
-    }
-    return;
-  case ND_DEREF:
-    gen_expr(node->lhs);
-    return;
+	switch (node->kind) {
+	case ND_VAR:
+		if (node->var->is_local) {
+			// Local variable
+			PRINTF("\tlea %d(%%rbp), %%rax\n", node->var->offset);
+		} else {
+			// Global variable
+			PRINTF("\tlea %s(%%rip), %%rax\n", node->var->name);
+		}
+		return;
+	case ND_DEREF:
+		gen_expr(node->lhs);
+		return;
 	case ND_COMMA:
 		gen_expr(node->lhs);
 		gen_addr(node->rhs);
@@ -64,22 +64,22 @@ static void gen_addr(Node *node) {
 		gen_addr(node->lhs);
 		PRINTF("\tadd $%d, %%rax\n", node->member->offset);
 		return;
-  }
+	}
 
-  error_tok(node->tok, "not an lvalue");
+	error_tok(node->tok, "not an lvalue");
 }
 
 // Load a value from where %rax is pointing to.
 static void load(Node *node) {
-if (node->ty->kind == TY_ARRAY || node->ty->kind == TY_STRUCT || node->ty->kind == TY_UNION) {
-    // If it is an array, do not attempt to load a value to the
-    // register because in general we can't load an entire array to a
-    // register. As a result, the result of an evaluation of an array
-    // becomes not the array itself but the address of the array.
-    // This is where "array is automatically converted to a pointer to
-    // the first element of the array in C" occurs.
-    return;
-  }
+	if (node->ty->kind == TY_ARRAY || node->ty->kind == TY_STRUCT || node->ty->kind == TY_UNION) {
+		// If it is an array, do not attempt to load a value to the
+		// register because in general we can't load an entire array to a
+		// register. As a result, the result of an evaluation of an array
+		// becomes not the array itself but the address of the array.
+		// This is where "array is automatically converted to a pointer to
+		// the first element of the array in C" occurs.
+		return;
+	}
 	// when we load a char/short to a register, we always
 	// extend them an int, so we can assume lower-half of
 	// a register always contains valid val. Upper-half of
