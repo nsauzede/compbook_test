@@ -949,18 +949,33 @@ static Node *add(Token **rest, Token *tok) {
 	}
 }
 
-static Node *relational(Token **rest, Token *tok) {
+static Node *shift(Token **rest, Token *tok) {
 	Node *node = add(&tok, tok);
 	for (;;) {
 		Token *start = tok;
+		if (equal(tok, "<<"))
+			node = new_binary(ND_SHL, node, add(&tok, tok->next), start);
+		else if (equal(tok, ">>"))
+			node = new_binary(ND_SHR, node, add(&tok, tok->next), start);
+		else {
+			*rest = tok;
+			return node;
+		}
+	}
+}
+
+static Node *relational(Token **rest, Token *tok) {
+	Node *node = shift(&tok, tok);
+	for (;;) {
+		Token *start = tok;
 		if (equal(tok, "<")) {
-			node = new_binary(ND_LT, node, add(&tok, tok->next), start);
+			node = new_binary(ND_LT, node, shift(&tok, tok->next), start);
 		} else if (equal(tok, "<=")) {
-			node = new_binary(ND_LE, node, add(&tok, tok->next), start);
+			node = new_binary(ND_LE, node, shift(&tok, tok->next), start);
 		} else if (equal(tok, ">")) {
-			node = new_binary(ND_LT, add(&tok, tok->next), node, start);
+			node = new_binary(ND_LT, shift(&tok, tok->next), node, start);
 		} else if (equal(tok, ">=")) {
-			node = new_binary(ND_LE, add(&tok, tok->next), node, start);
+			node = new_binary(ND_LE, shift(&tok, tok->next), node, start);
 		} else {
 			*rest = tok;
 			return node;
@@ -1039,23 +1054,26 @@ static Node *assign(Token **rest, Token *tok) {
 	if (equal(tok, "=")) {
 		// fprintf(stderr, "OUTPUT ASSIGN !!\n");
 		return new_binary(ND_ASSIGN, node, assign(rest, tok->next), tok);
-	} else if (equal(tok, "+=")) {
+	} else if (equal(tok, "+="))
 		return to_assign(new_add(node, assign(rest, tok->next), tok));
-	} else if (equal(tok, "-=")) {
+	else if (equal(tok, "-="))
 		return to_assign(new_sub(node, assign(rest, tok->next), tok));
-	} else if (equal(tok, "*=")) {
+	else if (equal(tok, "*="))
 		return to_assign(new_binary(ND_MUL, node, assign(rest, tok->next), tok));
-	} else if (equal(tok, "/=")) {
+	else if (equal(tok, "/="))
 		return to_assign(new_binary(ND_DIV, node, assign(rest, tok->next), tok));
-	} else if (equal(tok, "%=")) {
+	else if (equal(tok, "%="))
 		return to_assign(new_binary(ND_MOD, node, assign(rest, tok->next), tok));
-	} else if (equal(tok, "&=")) {
+	else if (equal(tok, "&="))
 		return to_assign(new_binary(ND_BITAND, node, assign(rest, tok->next), tok));
-	} else if (equal(tok, "|=")) {
+	else if (equal(tok, "|="))
 		return to_assign(new_binary(ND_BITOR, node, assign(rest, tok->next), tok));
-	} else if (equal(tok, "^=")) {
+	else if (equal(tok, "^="))
 		return to_assign(new_binary(ND_BITXOR, node, assign(rest, tok->next), tok));
-	}
+	else if (equal(tok, "<<="))
+		return to_assign(new_binary(ND_SHL, node, assign(rest, tok->next), tok));
+	else if (equal(tok, ">>="))
+		return to_assign(new_binary(ND_SHR, node, assign(rest, tok->next), tok));
 	*rest = tok;
 	return node;
 }

@@ -288,6 +288,8 @@ static void gen_expr(Node *node) {
 		case ND_NE:
 		case ND_LT:
 		case ND_LE:
+		case ND_SHL:
+		case ND_SHR:
 			break;
 		default:
 			error_tok(node->tok, "unhandled node kind %d", node->kind);
@@ -349,6 +351,14 @@ static void gen_expr(Node *node) {
 			else if (node->kind == ND_LE)
 				PRINTF("\tsetle %%al\n");
 			PRINTF("\tmovzb %%al, %%rax\n");
+			return;
+		case ND_SHL:
+			PRINTF("\tmov %%rdi, %%rcx\n");
+			PRINTF("\tshl %%cl, %s\n", ax);
+			return;
+		case ND_SHR:
+			PRINTF("\tmov %%rdi, %%rcx\n");
+			PRINTF("\tsar %%cl, %s\n", ax);
 			return;
 	}
 	error_tok(node->tok, "invalid expression");
