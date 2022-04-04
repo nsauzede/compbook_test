@@ -1049,8 +1049,22 @@ static Node *logor(Token **rest, Token *tok) {
 	return node;
 }
 
+static Node *conditional(Token **rest, Token *tok) {
+	Node *cond = logor(&tok, tok);
+	if (!equal(tok, "?")) {
+		*rest = tok;
+		return cond;
+	}
+	Node *node = new_node(ND_COND, tok);
+	node->cond = cond;
+	node->then = expr(&tok, tok->next);
+	tok = skip(tok, ":");
+	node->els = conditional(rest, tok);
+	return node;
+}
+
 static Node *assign(Token **rest, Token *tok) {
-	Node *node = logor(&tok, tok);
+	Node *node = conditional(&tok, tok);
 	if (equal(tok, "=")) {
 		// fprintf(stderr, "OUTPUT ASSIGN !!\n");
 		return new_binary(ND_ASSIGN, node, assign(rest, tok->next), tok);

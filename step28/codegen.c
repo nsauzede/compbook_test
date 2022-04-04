@@ -217,6 +217,18 @@ static void gen_expr(Node *node) {
 			gen_expr(node->lhs);
 			cast(node->lhs->ty, node->ty);
 			return;
+		case ND_COND: {
+			int c = count();
+			gen_expr(node->cond);
+			PRINTF("\tcmp $0, %%rax\n");
+			PRINTF("\tje .L.else.%d\n", c);
+			gen_expr(node->then);
+			PRINTF("\tjmp .L.end.%d\n", c);
+			PRINTF(".L.else.%d:\n", c);
+			gen_expr(node->els);
+			PRINTF(".L.end.%d:\n", c);
+			return;
+		}
 		case ND_NOT:
 			gen_expr(node->lhs);
 			PRINTF("\tcmp $0, %%rax\n");
