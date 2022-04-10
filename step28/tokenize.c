@@ -111,6 +111,12 @@ void _error_tok(Token *tok, char *fmt, ...) {
 	exit(1);
 }
 
+void _info_tok(Token *tok, char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	verror_at(tok->loc, tok->len, fmt, ap);
+}
+
 void print(char *s) {
 	fprintf(stderr, "%s\n", s);
 }

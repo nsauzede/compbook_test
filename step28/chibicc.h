@@ -37,6 +37,7 @@ void error_at(char *loc, char *fmt, ...);
 		_error_tok(t, f); \
 	} while (0);
 void _error_tok(Token *tok, char *fmt, ...);
+void _info_tok(Token *tok, char *fmt, ...);
 bool equal(Token *tok, char *op);
 Token *skip(Token *tok, char *op);
 bool consume(Token **rest, Token *tok, char *str);
@@ -79,8 +80,8 @@ typedef enum {
 	ND_BITAND,		// &
 	ND_BITOR,		// |
 	ND_BITXOR,		// ^
-	ND_SHL, 		// <<
-	ND_SHR, 		// >>
+	ND_SHL,			// <<
+	ND_SHR,			// >>
 	ND_EQ,			// ==
 	ND_NE,			// !=
 	ND_LT,			// <

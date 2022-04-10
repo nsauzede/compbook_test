@@ -55,7 +55,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] goto/labels
 - [x] break/continue/switch
 - [x] <<,>>,<<=,>>=,?: ops
-- [ ] const expressions
+- [x] const expressions
 - [ ] lots of var initializers
 - [ ] flexible array member
 - [ ] extern, static local variables

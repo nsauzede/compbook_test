@@ -79,6 +79,7 @@ static Type *union_decl(Token **rest, Token *tok);
 static Node *postfix(Token **rest, Token *tok);
 static Node *unary(Token **rest, Token *tok);
 static Node *funcall(Token **rest, Token *tok);
+static Node *conditional(Token **rest, Token *tok);
 
 static void print_node(Node *node, int depth) {
 	if (!node) {
@@ -301,12 +302,6 @@ static Type *find_typedef(Token *tok) {
 	return NULL;
 }
 
-static long get_number(Token *tok) {
-	if (tok->kind != TK_NUM)
-		error_tok(tok, "expected a number");
-	return tok->val;
-}
-
 static void push_tag_scope(Token *tok, Type *ty) {
 	TagScope *sc = calloc(1, sizeof(TagScope));
 	sc->name = strndup(tok->loc, tok->len);
@@ -326,6 +321,105 @@ static bool is_typename(Token *tok) {
 		}
 	}
 	return find_typedef(tok);
+}
+
+// Evaluate a given node as a constant expression
+static int64_t eval(Node *node) {
+	add_type(node);
+	int64_t val = 0;
+	Token *tok = node->tok;
+	switch (node->kind) {
+	case ND_ADD:
+		val = eval(node->lhs) + eval(node->rhs);
+		break;
+	case ND_SUB:
+		val = eval(node->lhs) - eval(node->rhs);
+		break;
+	case ND_MUL:
+		val = eval(node->lhs) * eval(node->rhs);
+		break;
+	case ND_DIV:
+		val = eval(node->lhs) / eval(node->rhs);
+		break;
+	case ND_MOD:
+		val = eval(node->lhs) % eval(node->rhs);
+		break;
+	case ND_BITAND:
+		val = eval(node->lhs) & eval(node->rhs);
+		break;
+	case ND_BITOR:
+		val = eval(node->lhs) | eval(node->rhs);
+		break;
+	case ND_BITXOR:
+		val = eval(node->lhs) ^ eval(node->rhs);
+		break;
+	case ND_SHL:
+		val = eval(node->lhs) << eval(node->rhs);
+		break;
+	case ND_SHR:
+		val = eval(node->lhs) >> eval(node->rhs);
+		break;
+	case ND_EQ:
+		val = eval(node->lhs) == eval(node->rhs);
+		break;
+	case ND_NE:
+		val = eval(node->lhs) != eval(node->rhs);
+		break;
+	case ND_LT:
+		val = eval(node->lhs) < eval(node->rhs);
+		break;
+	case ND_LE:
+		val = eval(node->lhs) <= eval(node->rhs);
+		break;
+	case ND_COND:
+		val = eval(node->cond) ? eval(node->then) : eval(node->els);
+		break;
+	case ND_COMMA:
+		val = eval(node->rhs);
+		break;
+	case ND_NOT:
+		val = !eval(node->lhs);
+		break;
+	case ND_BITNOT:
+		val = ~eval(node->lhs);
+		break;
+	case ND_NEG:
+		val = -eval(node->lhs);
+		break;
+	case ND_LOGOR:
+		val = eval(node->lhs) || eval(node->rhs);
+		break;
+	case ND_LOGAND:
+		val = eval(node->lhs) && eval(node->rhs);
+		break;
+	case ND_NUM:
+		val = node->val;
+		break;
+	case ND_CAST:
+		val = eval(node->lhs);
+		if (is_integer(node->ty)) {
+			switch (node->ty->size) {
+			case 1:
+				val = (uint8_t)val;
+				break;
+			case 2:
+				val = (uint16_t)val;
+				break;
+			case 4:
+				val = (uint32_t)val;
+				break;
+			}
+		}
+		break;
+	default:
+		error_tok(tok, "unknown eval node kind %d", node->kind);
+	}
+	return val;
+}
+
+static int64_t const_expr(Token **rest, Token *tok) {
+	Node *node = conditional(rest, tok);
+	return eval(node);
 }
 
 static Type *enum_specifier(Token **rest, Token *tok) {
@@ -354,10 +448,8 @@ static Type *enum_specifier(Token **rest, Token *tok) {
 			tok = skip(tok, ",");
 		char *name = get_ident(tok);
 		tok = tok->next;
-		if (equal(tok, "=")) {
-			val = get_number(tok->next);
-			tok = tok->next->next;
-		}
+		if (equal(tok, "="))
+			val = const_expr(&tok, tok->next);
 		VarScope *sc = push_scope(name);
 		sc->enum_ty = ty;
 		sc->enum_val = val++;
@@ -489,8 +581,8 @@ static Type *array_dimensions(Token **rest, Token *tok, Type *ty) {
 		ty = type_suffix(rest, tok->next, ty);
 		return array_of(ty, -1);
 	}
-	int sz = get_number(tok);
-	tok = skip(tok->next, "]");
+	int sz = const_expr(&tok, tok);
+	tok = skip(tok, "]");
 	ty = type_suffix(rest, tok, ty);
 	return array_of(ty, sz);
 }
@@ -988,7 +1080,6 @@ static Node *equality(Token **rest, Token *tok) {
 	for (;;) {
 		Token *start = tok;
 		if (equal(tok, "==")) {
-			// fprintf(stderr, "OUTPUT EQU !!\n");
 			node = new_binary(ND_EQ, node, relational(&tok, tok->next), start);
 		} else if (equal(tok, "!=")) {
 			node = new_binary(ND_NE, node, relational(&tok, tok->next), start);
@@ -1066,7 +1157,6 @@ static Node *conditional(Token **rest, Token *tok) {
 static Node *assign(Token **rest, Token *tok) {
 	Node *node = conditional(&tok, tok);
 	if (equal(tok, "=")) {
-		// fprintf(stderr, "OUTPUT ASSIGN !!\n");
 		return new_binary(ND_ASSIGN, node, assign(rest, tok->next), tok);
 	} else if (equal(tok, "+="))
 		return to_assign(new_add(node, assign(rest, tok->next), tok));
@@ -1212,9 +1302,9 @@ static Node *stmt(Token **rest, Token *tok) {
 	if (equal(tok, "case")) {
 		if (!current_switch)
 			error_tok(tok, "stray case");
-		int val = get_number(tok->next);
 		Node *node = new_node(ND_CASE, tok);
-		tok = skip(tok->next->next, ":");
+		int val = const_expr(&tok, tok->next);
+		tok = skip(tok, ":");
 		node->label = new_unique_name();
 		node->lhs = stmt(rest, tok);
 		node->val = val;

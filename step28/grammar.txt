@@ -4,7 +4,7 @@ type-suffix       = "(" func-params
     | "[" num "]" type-suffix
     | "[" array-dimensions
     | epsilon
-array-dimensions  = num? "]" type-suffix
+array-dimensions  = const-expr? "]" type-suffix
 func-params       = (param ("," param)*)? ")"
 param             = declspec declarator
 type-name         = declspec abstract-declarator
@@ -17,7 +17,7 @@ declspec          = ("void" | "_Bool" | "char" | "short" | "int" | "long"
     | enum-specifier)+
 enum-specifier    = ident? "{" enum-list? "}"
     | ident ("{" enum-list? "}")?
-enum-list         = ident ("=" num)? ("," ident ("=" num)?)*
+enum-list         = ident ("=" const-expr)? ("," ident ("=" const-expr)?)*
 struct-decl       = struct-union-decl
 union-decl        = struct-union-decl
 struct-union-decl = ident? ("{" struct-members)?
@@ -25,7 +25,7 @@ struct-members    = (declspec declarator ("," declarator)* ";")*
 stmt              = "return" expr ";"
     | "if" "(" expr ")" stmt ("else" stmt)?
     | "switch" "(" expr ")" stmt
-    | "case" num ":" stmt
+    | "case" const-expr ":" stmt
     | "default" ":" stmt
     | "for" "(" expr-stmt expr? ";" expr? ")" stmt
     | "while" "(" expr ")" stmt
