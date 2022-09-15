@@ -17,7 +17,7 @@ int main() {
   ASSERT(11, "\v"[0]);
   ASSERT(12, "\f"[0]);
   ASSERT(13, "\r"[0]);
-  ASSERT(27, "\e"[0]);
+  ASSERT(27, "\x1b"[0]);
 
   ASSERT(106, "\j"[0]);
   ASSERT(107, "\k"[0]);

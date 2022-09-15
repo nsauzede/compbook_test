@@ -248,7 +248,7 @@ static int read_escaped_char(char **new_pos, char *p) {
 		case 'v':num = '\v';p++;break;
 		case 'f':num = '\f';p++;break;
 		case 'r':num = '\r';p++;break;
-		case 'e':num = '\e';p++;break;
+		case 'e':num = '\x1b';p++;break;
 		case 'x':
 			p++;
 			num = 0;
