@@ -709,11 +709,20 @@ static Node *funcall(Token **rest, Token *tok) {
 	tok = tok->next->next;
 
 	VarScope *sc = find_var(start);
-	if (!sc)
-		error_tok(start, "Implicit declaration of a function");
-	if (!sc->var || sc->var->ty->kind != TY_FUNC)
+	Obj var, *varp = &var;
+	Type ty0;
+	if (!sc) {
+		info_tok(start, "Implicit declaration of a function `%.*s`", start->len, start->loc);
+		var.ty = &ty0;
+		ty0.kind = TY_FUNC;
+		ty0.params = 0;
+	} else {
+		varp = sc->var;
+		//info_tok(start, "sc IS NOT NULL - kind=%d", sc->var->ty->kind);
+	}
+	if (!varp || varp->ty->kind != TY_FUNC)
 		error_tok(start, "Not a function");
-	Type *ty = sc->var->ty;
+	Type *ty = varp->ty;
 	Type *param_ty = ty->params;
 	Node head = {};
 	Node *cur = &head;
@@ -728,6 +737,8 @@ static Node *funcall(Token **rest, Token *tok) {
 				error_tok(arg->tok, "Passing struct or union as param is not supported yet.");
 			arg = new_cast(arg, param_ty);
 			param_ty = param_ty->next;
+		} else {
+			//info_tok(arg->tok, "param_ty IS NULL");
 		}
 		cur = cur->next = arg;
 	}

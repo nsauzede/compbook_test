@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 cat <<EOF | gcc -xc -c -o tmp2.o -
 int ret3() { return 3; }
 int ret5() { return 5; }
@@ -14,6 +14,7 @@ void alloc4(int**p,int a1, int a2, int a3, int a4){
 }
 EOF
 cat <<EOF > tmp.h
+int ret3();
 int sub_char(char a, char b, char c);
 EOF
 assert() {
@@ -225,7 +226,7 @@ assert 11 'int main() { return "\v"[0]; }'
 assert 12 'int main() { return "\f"[0]; }'
 assert 13 'int main() { return "\r"[0]; }'
 assert 27 'int main() { return "\e"[0]; }'
-
+# the following three are invalid/nonstandard escape characters
 assert 106 'int main() { return "\j"[0]; }'
 assert 107 'int main() { return "\k"[0]; }'
 assert 108 'int main() { return "\l"[0]; }'
