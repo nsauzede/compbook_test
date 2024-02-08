@@ -10,7 +10,10 @@
 Token *token;
 
 #define RED() "\x1b[31m"
+#define BMAG() "\x1b[95m"
+#define BWH() "\x1b[97m"
 #define NRM() "\x1b[0m"
+
 static char *user_input;
 static char *user_file = "<stdin>";
 static char *get_line_col(int *line, int *col, int pos) {
@@ -48,18 +51,19 @@ static void add_line_numbers(Token *tok) {
 	} while (*p++);
 }
 
-// Print error message in the following format:
-// parse.c:529:funcall:test/quine.i:36:80: error: Implicit declaration of a function
+// Print colored typed message in the following format:
+// parse.c:529:funcall:
+// test/quine.i:36:80: error: Implicit declaration of a function
 // int main(){char*s="int main(){char*s=%c%s%c;printf(s,34,s,34,10);return 0;}%c";printf(s,34,s,34,10);return 0;}
 //                                                                                ^~~~~~
-static void verror_at(char *loc, int len, char *fmt, va_list ap) {
+static void vmessage_at(char *color, char *type, char *loc, int len, char *fmt, va_list ap) {
 	int pos = 0;
 	char *str = 0;
 	if (loc) {
 		pos = loc - user_input;
 		int user_line, user_col;
 		str = get_line_col(&user_line, &user_col, pos);
-		fprintf(stderr, "%s:%d:%d: %serror%s: ", user_file, user_line, user_col, RED(), NRM());
+		fprintf(stderr, "%s%s:%d:%d:%s %s%s%s: ", BWH(), user_file, user_line, user_col, NRM(), color, type, NRM());
 		pos = user_col - 1;
 	}
 	vfprintf(stderr, fmt, ap);
@@ -74,7 +78,7 @@ static void verror_at(char *loc, int len, char *fmt, va_list ap) {
 		fprintf(stderr, "%.*s\n", slen, str);
 #else
 		fprintf(stderr, "%.*s", pos, str);
-		fprintf(stderr, "%s%.*s%s", RED(), len, str+pos, NRM());
+		fprintf(stderr, "%s%.*s%s", color, len, str+pos, NRM());
 		fprintf(stderr, "%.*s\n", slen-pos-len, str+pos+len);
 #endif
 		fprintf(stderr, "%*s", pos, "");
@@ -88,6 +92,22 @@ static void verror_at(char *loc, int len, char *fmt, va_list ap) {
 		fprintf(stderr, "\n");
 #endif
 	}
+}
+
+// Print red error message in the following format:
+// parse.c:529:funcall:test/quine.i:36:80: error: Implicit declaration of a function
+// int main(){char*s="int main(){char*s=%c%s%c;printf(s,34,s,34,10);return 0;}%c";printf(s,34,s,34,10);return 0;}
+//                                                                                ^~~~~~
+static void verror_at(char *loc, int len, char *fmt, va_list ap) {
+    vmessage_at(RED(), "error", loc, len, fmt, ap);
+}
+
+// Print pink info message in the following format:
+// parse.c:529:funcall:test/quine.i:36:80: error: Implicit declaration of a function
+// int main(){char*s="int main(){char*s=%c%s%c;printf(s,34,s,34,10);return 0;}%c";printf(s,34,s,34,10);return 0;}
+//                                                                                ^~~~~~
+static void vinfo_at(char *loc, int len, char *fmt, va_list ap) {
+    vmessage_at(BMAG(), "warning", loc, len, fmt, ap);
 }
 
 void error(char *fmt, ...) {
@@ -114,7 +134,7 @@ void _error_tok(Token *tok, char *fmt, ...) {
 void _info_tok(Token *tok, char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	verror_at(tok->loc, tok->len, fmt, ap);
+	vinfo_at(tok->loc, tok->len, fmt, ap);
 }
 
 void print(char *s) {

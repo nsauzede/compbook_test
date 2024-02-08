@@ -33,11 +33,11 @@ struct Token {
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 #define error_tok(t, f...) do { \
-		fprintf(stderr, "%s:%d:%s:", __FILE__, __LINE__, __FUNCTION__); \
+		fprintf(stderr, "%s:%d:%s:\n", __FILE__, __LINE__, __FUNCTION__); \
 		_error_tok(t, f); \
 	} while (0);
 #define info_tok(t, f...) do { \
-		fprintf(stderr, "%s:%d:%s:", __FILE__, __LINE__, __FUNCTION__); \
+		fprintf(stderr, "%s:%d:%s:\n", __FILE__, __LINE__, __FUNCTION__); \
 		_info_tok(t, f); \
 	} while (0);
 void _error_tok(Token *tok, char *fmt, ...);
