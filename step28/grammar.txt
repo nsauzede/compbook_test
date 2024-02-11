@@ -11,8 +11,8 @@ type-name         = declspec abstract-declarator
 abstract-declarator = "*"* ("(" abstract-declarator ")")? type-suffix
 declaration       = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
 declarator        = "*"* ("(" ident ")" | "(" declarator ")" | ident) type-suffix
-declspec          = ("void" | "_Bool" | "char" | "short" | "int" | "long"
-    | "typedef" | "static"
+declspec          = ("void" | "_Bool" | "char" | "short" | "int" | "long" | "unsigned" | "signed"
+    | "typedef" | "static" | "const" | "extern"
     | struct-decl | union-decl | typedef-name
     | enum-specifier)+
 enum-specifier    = ident? "{" enum-list? "}"

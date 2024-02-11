@@ -36,7 +36,7 @@ void error_at(char *loc, char *fmt, ...);
 		fprintf(stderr, "%s:%d:%s:\n", __FILE__, __LINE__, __FUNCTION__); \
 		_error_tok(t, f); \
 	} while (0);
-#define info_tok(t, f...) do { \
+#define warning_tok(t, f...) do { \
 		fprintf(stderr, "%s:%d:%s:\n", __FILE__, __LINE__, __FUNCTION__); \
 		_info_tok(t, f); \
 	} while (0);
@@ -187,6 +187,7 @@ typedef enum {
 	TY_ARRAY,
 	TY_STRUCT,
 	TY_UNION,
+	TY_UNSIGNED,
 } TypeKind;
 
 struct Type {

@@ -313,7 +313,7 @@ static void push_tag_scope(Token *tok, Type *ty) {
 static bool is_typename(Token *tok) {
 	static char *kw[] = {
 		"void", "_Bool", "char", "short", "int", "long", "struct", "union",
-		"typedef", "enum", "static",
+		"typedef", "enum", "static", "unsigned", "signed", "const", "extern",
 	};
 	for (int i = 0; i < sizeof(kw) / sizeof(kw[0]); i++) {
 		if (equal(tok, kw[i])) {
@@ -465,12 +465,13 @@ static Type *enum_specifier(Token **rest, Token *tok) {
 static Type *declspec(Token **rest, Token *tok, VarAttr *attr) {
 	enum {
 		VOID  = 1 << 0,
-		BOOL  = 1 << 2,
-		CHAR  = 1 << 4,
-		SHORT = 1 << 6,
-		INT   = 1 << 8,
-		LONG  = 1 << 10,
-		OTHER = 1 << 12,
+		BOOL  = 1 << 1,
+		CHAR  = 1 << 2,
+		SHORT = 1 << 3,
+		INT   = 1 << 4,
+		LONG  = 1 << 5,
+
+		OTHER = 1 << 15,
 	};
 	Type *ty = ty_int;
 	int counter = 0;
@@ -519,7 +520,15 @@ static Type *declspec(Token **rest, Token *tok, VarAttr *attr) {
 			counter += INT;
 		else if (equal(tok, "long"))
 			counter += LONG;
-		else
+		else if (equal(tok, "unsigned")
+		    || equal(tok, "signed")
+		    || equal(tok, "const")
+		    || equal(tok, "extern")
+		) {
+			//warning_tok(tok, "Ignoring type modifier");
+			tok = tok->next;
+			continue;       // let's ignore unsigned/signed/const/extern for now
+		} else
 			unreachable();
 		switch (counter) {
 			case VOID:
@@ -712,7 +721,7 @@ static Node *funcall(Token **rest, Token *tok) {
 	Obj var, *varp = &var;
 	Type ty0;
 	if (!sc) {
-		info_tok(start, "Implicit declaration of a function `%.*s`", start->len, start->loc);
+		warning_tok(start, "Implicit declaration of a function `%.*s`", start->len, start->loc);
 		var.ty = &ty0;
 		ty0.kind = TY_FUNC;
 		ty0.params = 0;
