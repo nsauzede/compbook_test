@@ -423,6 +423,13 @@ static Token *tokenize_string(char *p) {
 			p += cur->len;
 			continue;
 		}
+		// pretend "..." variadic argument is an identifier
+		if (startswith(p, "...")) {
+			char *start = p;
+			p += 3;
+			cur = cur->next = new_token(TK_IDENT, start, p);
+			continue;
+		}
 		// identifier or keyword
 		if (is_ident1(*p)) {
 			char *start = p;

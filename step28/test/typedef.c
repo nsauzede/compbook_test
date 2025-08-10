@@ -1,7 +1,6 @@
 #include "test.h"
 
 typedef int MyInt, MyInt2[4];
-typedef int;
 
 int main() {
   ASSERT(1, ({ typedef int t; t x=1; x; }));

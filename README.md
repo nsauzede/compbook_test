@@ -56,6 +56,7 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [x] break/continue/switch
 - [x] <<,>>,<<=,>>=,?: ops
 - [x] const expressions
+- [x] treat ... as a pseudo identifier (to accept variadic arg declaration)
 - [ ] lots of var initializers
 - [ ] flexible array member
 - [ ] extern, static local variables
@@ -63,7 +64,6 @@ find . -name "ste*" -type d -exec make  clean all check test -C '{}' \;
 - [ ] do while
 - [ ] variadic function
 - [ ] signed/unsigned
-- [ ] ...
 - [ ] self-host ?
 
 # Old notes
